@@ -520,9 +520,9 @@ function App() {
                         </div>
                     </>
                 ) : (
-                    <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-                        {/* Generator panel - full width en móvil, sidebar en desktop */}
-                        <div className="w-full lg:w-96 glass-panel-dark flex-shrink-0 max-h-[40vh] lg:max-h-full overflow-auto">
+                    <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto">
+                        {/* Generator panel - altura dinámica que crece verticalmente más allá del grid */}
+                        <div className="w-full lg:w-96 glass-panel-dark flex-shrink-0 lg:self-start">
                             <Generator
                                 ramos={ramos}
                                 onPreviewResultado={handlePreviewResultado}
