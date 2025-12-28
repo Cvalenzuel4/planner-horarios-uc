@@ -312,7 +312,7 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="h-screen flex flex-col overflow-hidden">
             {/* Header */}
             <header className="glass-panel-dark px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -355,7 +355,7 @@ function App() {
             </header>
 
             {/* Main content */}
-            <main className="flex-1 flex overflow-hidden">
+            <main className="flex-1 flex overflow-hidden min-h-0">
                 {tab === 'planner' ? (
                     <>
                         {/* Sidebar */}

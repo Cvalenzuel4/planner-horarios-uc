@@ -30,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onEliminarSeccion,
 }) => {
     const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
+    const [busqueda, setBusqueda] = useState('');
 
     const toggleExpandido = (sigla: string) => {
         const nuevos = new Set(expandidos);
@@ -41,6 +42,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         setExpandidos(nuevos);
     };
 
+    const filtroBusqueda = busqueda.trim().toLowerCase();
+    const ramosFiltrados = filtroBusqueda
+        ? ramos.filter(ramo => ramo.sigla.toLowerCase().includes(filtroBusqueda))
+        : ramos;
 
 
     // Verificar si una sección tiene conflicto con las seleccionadas
@@ -71,6 +76,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
             </div>
 
+            <div className="mb-4">
+                <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar por sigla..."
+                    className="input-styled text-sm"
+                    aria-label="Buscar ramos por sigla"
+                />
+            </div>
+
             {/* Lista de ramos */}
             {ramos.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
@@ -78,9 +94,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <p>No hay ramos agregados</p>
                     <p className="text-sm mt-1">Haz clic en "Agregar" para comenzar</p>
                 </div>
+            ) : ramosFiltrados.length === 0 ? (
+                <div className="text-center py-8 text-white/50">
+                    <p className="text-3xl mb-2">🔍</p>
+                    <p>No hay coincidencias</p>
+                    <p className="text-sm mt-1">Prueba con otra sigla</p>
+                </div>
             ) : (
                 <div className="space-y-3">
-                    {ramos.map((ramo) => {
+                    {ramosFiltrados.map((ramo) => {
                         const isExpanded = expandidos.has(ramo.sigla);
                         const seccionesPreparadas = prepararRamo(ramo);
 
