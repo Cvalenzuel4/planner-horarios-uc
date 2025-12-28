@@ -166,3 +166,106 @@ body {
 .loader {
   @apply w-8 h-8 border-4 border-white/20 border-t-indigo-500 rounded-full animate-spin;
 }
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Mejoras para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Botones más grandes para touch */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Checkboxes más grandes */
+  .checkbox-styled {
+    @apply w-6 h-6;
+  }
+
+  /* Scrollbars más anchos para touch */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Móviles pequeños (< 640px) */
+@media (max-width: 639px) {
+  .grid-cell {
+    @apply min-h-[45px];
+  }
+
+  .grid-cell-header {
+    @apply py-1.5 text-xs;
+  }
+
+  .schedule-block {
+    @apply text-[8px];
+  }
+
+  .schedule-block span {
+    @apply leading-tight;
+  }
+
+  /* Modales más pequeños */
+  .modal-content {
+    @apply max-h-[95vh] mx-2;
+  }
+
+  /* Glassmorphism más sutil en móvil para rendimiento */
+  .glass-panel,
+  .glass-panel-dark {
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* Tablets (640px - 1024px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .grid-cell {
+    @apply min-h-[50px];
+  }
+
+  .schedule-block {
+    @apply text-[9px];
+  }
+}
+
+/* Mejoras de accesibilidad para focus en móvil */
+@media (max-width: 1023px) {
+
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    @apply outline-2 outline-offset-2 outline-indigo-400;
+  }
+}
+
+/* Animaciones reducidas para preferencia del usuario */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-conflict {
+    animation: none;
+  }
+}
+
+/* Modo oscuro del sistema ya está cubierto por el diseño base */
+
+/* Safe area para dispositivos con notch */
+@supports (padding: max(0px)) {
+  .glass-panel-dark {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}

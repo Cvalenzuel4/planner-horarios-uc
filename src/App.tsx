@@ -50,6 +50,7 @@ function App() {
     // Estado de UI
     const [tab, setTab] = useState<Tab>('planner');
     const [modal, setModal] = useState<ModalState>({ type: 'none' });
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -275,6 +276,13 @@ function App() {
         setTab('planner');
     }, []);
 
+    // Limpiar todas las secciones seleccionadas
+    const handleLimpiarHorario = useCallback(() => {
+        if (confirm('¿Estás seguro de que quieres limpiar todo el horario?')) {
+            setSeccionesSeleccionadasIds(new Set());
+        }
+    }, []);
+
     // Obtener siguiente número de sección
     const getSiguienteNumeroSeccion = useCallback((sigla: string) => {
         const ramo = ramos.find(r => r.sigla === sigla);
@@ -314,102 +322,169 @@ function App() {
     return (
         <div className="min-h-screen flex flex-col">
             {/* Header */}
-            <header className="glass-panel-dark px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent">
-                        📅 Planificador de Horarios UC
+            <header className="glass-panel-dark px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+                    {/* Botón hamburguesa para móvil */}
+                    <button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        className="lg:hidden p-2 hover:bg-white/10 rounded-lg text-white transition-colors"
+                        aria-label="Toggle menu"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {sidebarOpen ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            )}
+                        </svg>
+                    </button>
+
+                    <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent truncate">
+                        <span className="hidden sm:inline">📅 Planificador de Horarios UC</span>
+                        <span className="sm:hidden">📅 Horarios UC</span>
                     </h1>
 
-                    {/* Tabs */}
-                    <nav className="flex gap-1 ml-8">
+                    {/* Tabs - ocultos en móvil pequeño, visibles como iconos en tablets */}
+                    <nav className="hidden md:flex gap-1 ml-4 lg:ml-8">
                         <button
-                            onClick={() => setTab('planner')}
-                            className={`px-4 py-2 rounded-lg font-medium transition-all ${tab === 'planner'
+                            onClick={() => { setTab('planner'); setSidebarOpen(false); }}
+                            className={`px-3 lg:px-4 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${tab === 'planner'
                                 ? 'bg-white/20 text-white'
                                 : 'text-white/60 hover:text-white hover:bg-white/10'
                                 }`}
                         >
-                            📋 Planificador
+                            📋 <span className="hidden lg:inline">Planificador</span>
                         </button>
                         <button
-                            onClick={() => setTab('generator')}
-                            className={`px-4 py-2 rounded-lg font-medium transition-all ${tab === 'generator'
+                            onClick={() => { setTab('generator'); setSidebarOpen(false); }}
+                            className={`px-3 lg:px-4 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${tab === 'generator'
                                 ? 'bg-white/20 text-white'
                                 : 'text-white/60 hover:text-white hover:bg-white/10'
                                 }`}
                         >
-                            🔄 Generador
+                            🔄 <span className="hidden lg:inline">Generador</span>
                         </button>
                     </nav>
                 </div>
 
                 {/* Botones de Import/Export */}
-                <div className="flex gap-2">
-                    <button onClick={handleImportar} className="btn-secondary text-sm">
-                        📤 Importar
+                <div className="flex gap-1 md:gap-2 flex-shrink-0">
+                    <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-2 md:px-4">
+                        <span className="hidden sm:inline">📥 Importar</span>
+                        <span className="sm:hidden">📥</span>
                     </button>
-                    <button onClick={handleExportar} className="btn-secondary text-sm">
-                        📥 Exportar
+                    <button onClick={handleExportar} className="btn-secondary text-xs md:text-sm px-2 md:px-4">
+                        <span className="hidden sm:inline">📤 Exportar</span>
+                        <span className="sm:hidden">📤</span>
                     </button>
                 </div>
             </header>
 
+            {/* Tabs móviles - visibles solo en pantallas pequeñas */}
+            <div className="md:hidden flex glass-panel-dark border-t border-white/10">
+                <button
+                    onClick={() => { setTab('planner'); setSidebarOpen(false); }}
+                    className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'planner'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/60'
+                        }`}
+                >
+                    📋 Planificador
+                </button>
+                <button
+                    onClick={() => { setTab('generator'); setSidebarOpen(false); }}
+                    className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'generator'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/60'
+                        }`}
+                >
+                    🔄 Generador
+                </button>
+            </div>
+
             {/* Main content */}
-            <main className="flex-1 flex overflow-hidden">
+            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
                 {tab === 'planner' ? (
                     <>
-                        {/* Sidebar */}
-                        <Sidebar
-                            ramos={ramos}
-                            seccionesSeleccionadas={seccionesSeleccionadas}
-                            onToggleSeccion={handleToggleSeccion}
-                            onAgregarRamo={handleAgregarRamo}
-                            onEditarRamo={handleEditarRamo}
-                            onEliminarRamo={handleEliminarRamo}
-                            onAgregarSeccion={handleAgregarSeccion}
-                            onEditarSeccion={handleEditarSeccion}
-                            onEliminarSeccion={handleEliminarSeccion}
-                        />
+                        {/* Overlay para cerrar sidebar en móvil */}
+                        {sidebarOpen && (
+                            <div
+                                className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                                onClick={() => setSidebarOpen(false)}
+                            />
+                        )}
+
+                        {/* Sidebar - drawer en móvil, fijo en desktop */}
+                        <div className={`
+                            fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto
+                            transform transition-transform duration-300 ease-in-out
+                            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                            flex-shrink-0 h-full max-h-[100vh] lg:max-h-[calc(100vh-80px)] overflow-hidden
+                        `}>
+                            <Sidebar
+                                ramos={ramos}
+                                seccionesSeleccionadas={seccionesSeleccionadas}
+                                onToggleSeccion={handleToggleSeccion}
+                                onAgregarRamo={handleAgregarRamo}
+                                onEditarRamo={handleEditarRamo}
+                                onEliminarRamo={handleEliminarRamo}
+                                onAgregarSeccion={handleAgregarSeccion}
+                                onEditarSeccion={handleEditarSeccion}
+                                onEliminarSeccion={handleEliminarSeccion}
+                            />
+                        </div>
 
                         {/* Grid */}
-                        <div className="flex-1 p-6 overflow-auto">
-                            <div className="glass-panel p-6">
+                        <div className="flex-1 p-3 md:p-6 overflow-auto">
+                            <div className="glass-panel p-3 md:p-6">
                                 <ScheduleGrid
                                     seccionesSeleccionadas={seccionesSeleccionadas}
                                     previewSecciones={previewSecciones}
                                 />
                             </div>
 
-                            {/* Leyenda */}
-                            <div className="mt-4 flex items-center gap-4 justify-center flex-wrap">
-                                <span className="text-white/50 text-sm">Leyenda:</span>
-                                <span className="flex items-center gap-1 text-sm">
-                                    <span className="w-4 h-4 rounded bg-catedra" />
+                            {/* Leyenda - más compacta en móvil */}
+                            <div className="mt-3 md:mt-4 flex items-center gap-2 md:gap-4 justify-center flex-wrap">
+                                <span className="text-white/50 text-xs md:text-sm">Leyenda:</span>
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-catedra" />
                                     <span className="text-white/70">Cátedra</span>
                                 </span>
-                                <span className="flex items-center gap-1 text-sm">
-                                    <span className="w-4 h-4 rounded bg-laboratorio" />
-                                    <span className="text-white/70">Laboratorio</span>
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-laboratorio" />
+                                    <span className="text-white/70">Lab</span>
                                 </span>
-                                <span className="flex items-center gap-1 text-sm">
-                                    <span className="w-4 h-4 rounded bg-ayudantia" />
-                                    <span className="text-white/70">Ayudantía</span>
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-ayudantia" />
+                                    <span className="text-white/70">Ayud</span>
                                 </span>
-                                <span className="flex items-center gap-1 text-sm">
-                                    <span className="w-4 h-4 rounded bg-taller" />
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-taller" />
                                     <span className="text-white/70">Taller</span>
                                 </span>
-                                <span className="flex items-center gap-1 text-sm">
-                                    <span className="w-4 h-4 rounded bg-red-500 animate-pulse" />
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-500 animate-pulse" />
                                     <span className="text-white/70">Conflicto</span>
                                 </span>
+
+                                {/* Botón limpiar - solo visible si hay secciones seleccionadas */}
+                                {seccionesSeleccionadas.length > 0 && (
+                                    <button
+                                        onClick={handleLimpiarHorario}
+                                        className="ml-2 md:ml-4 px-3 py-1 text-xs md:text-sm bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg border border-red-500/30 transition-all flex items-center gap-1"
+                                    >
+                                        <span>🗑️</span>
+                                        <span className="hidden sm:inline">Limpiar horario</span>
+                                        <span className="sm:hidden">Limpiar</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </>
                 ) : (
-                    <>
-                        {/* Generator sidebar */}
-                        <div className="w-96 glass-panel-dark">
+                    <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                        {/* Generator panel - full width en móvil, sidebar en desktop */}
+                        <div className="w-full lg:w-96 glass-panel-dark flex-shrink-0 max-h-[40vh] lg:max-h-full overflow-auto">
                             <Generator
                                 ramos={ramos}
                                 onPreviewResultado={handlePreviewResultado}
@@ -419,15 +494,15 @@ function App() {
                         </div>
 
                         {/* Grid con preview */}
-                        <div className="flex-1 p-6 overflow-auto">
-                            <div className="glass-panel p-6">
+                        <div className="flex-1 p-3 md:p-6 overflow-auto">
+                            <div className="glass-panel p-3 md:p-6">
                                 <ScheduleGrid
                                     seccionesSeleccionadas={[]}
                                     previewSecciones={previewSecciones}
                                 />
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
             </main>
 

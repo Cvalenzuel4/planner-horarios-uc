@@ -30,6 +30,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onEliminarSeccion,
 }) => {
     const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
+    const [busqueda, setBusqueda] = useState('');
+
+    // Filtrar ramos según la búsqueda por sigla
+    const ramosFiltrados = ramos.filter(ramo =>
+        ramo.sigla.toLowerCase().includes(busqueda.toLowerCase())
+    );
 
     const toggleExpandido = (sigla: string) => {
         const nuevos = new Set(expandidos);
@@ -71,6 +77,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
             </div>
 
+            {/* Barra de búsqueda */}
+            <div className="mb-4">
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder="Buscar por sigla..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        className="w-full px-4 py-2 pl-10 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-colors"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
+                        🔍
+                    </span>
+                    {busqueda && (
+                        <button
+                            onClick={() => setBusqueda('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+                {busqueda && (
+                    <p className="text-xs text-white/40 mt-1">
+                        {ramosFiltrados.length} resultado{ramosFiltrados.length !== 1 ? 's' : ''}
+                    </p>
+                )}
+            </div>
+
             {/* Lista de ramos */}
             {ramos.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
@@ -78,9 +113,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <p>No hay ramos agregados</p>
                     <p className="text-sm mt-1">Haz clic en "Agregar" para comenzar</p>
                 </div>
+            ) : ramosFiltrados.length === 0 ? (
+                <div className="text-center py-8 text-white/50">
+                    <p className="text-2xl mb-2">🔍</p>
+                    <p>No se encontraron ramos</p>
+                    <p className="text-sm mt-1">con la sigla "{busqueda}"</p>
+                </div>
             ) : (
                 <div className="space-y-3">
-                    {ramos.map((ramo) => {
+                    {ramosFiltrados.map((ramo) => {
                         const isExpanded = expandidos.has(ramo.sigla);
                         const seccionesPreparadas = prepararRamo(ramo);
 
