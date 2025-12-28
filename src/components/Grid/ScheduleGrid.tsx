@@ -167,10 +167,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                             <div className="grid-cell-header glass-panel flex flex-col justify-center">
                                 <span className="text-white font-bold">M{modulo}</span>
                                 <span className="text-white/60 text-[10px]">
-                                    {HORARIOS_MODULOS[modulo].inicio}
-                                </span>
-                                <span className="text-white/60 text-[10px]">
-                                    {HORARIOS_MODULOS[modulo].fin}
+                                    {HORARIOS_MODULOS[modulo].inicio} - {HORARIOS_MODULOS[modulo].fin}
                                 </span>
                             </div>
                             {/* Celdas de cada día */}
@@ -202,10 +199,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                             <div className="grid-cell-header glass-panel flex flex-col justify-center">
                                 <span className="text-white font-bold">M{modulo}</span>
                                 <span className="text-white/60 text-[10px]">
-                                    {HORARIOS_MODULOS[modulo].inicio}
-                                </span>
-                                <span className="text-white/60 text-[10px]">
-                                    {HORARIOS_MODULOS[modulo].fin}
+                                    {HORARIOS_MODULOS[modulo].inicio} - {HORARIOS_MODULOS[modulo].fin}
                                 </span>
                             </div>
                             {/* Celdas de cada día */}

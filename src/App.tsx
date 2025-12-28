@@ -2,7 +2,7 @@
  * Planificador de Horarios UC - Aplicación Principal
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import { Ramo, Seccion, SeccionConMask } from './types';
 import { prepararRamo } from './core/bitmask';
 import {
@@ -27,6 +27,7 @@ import {
     Generator,
 } from './components';
 import { datosIniciales } from './data';
+import { exportarHorarioExcel } from './utils/excelExport';
 
 type Tab = 'planner' | 'generator';
 type Modal = 'none' | 'ramo' | 'seccion';
@@ -51,6 +52,10 @@ function App() {
     const [tab, setTab] = useState<Tab>('planner');
     const [modal, setModal] = useState<ModalState>({ type: 'none' });
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [gridHeight, setGridHeight] = useState<number | null>(null);
+
+    // Ref para medir la altura del grid
+    const gridContainerRef = useRef<HTMLDivElement>(null);
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -103,6 +108,19 @@ function App() {
         }
         return resultado;
     }, [ramos, seccionesSeleccionadasIds]);
+
+    // Medir la altura del grid para sincronizar con el sidebar
+    useLayoutEffect(() => {
+        const updateGridHeight = () => {
+            if (gridContainerRef.current) {
+                setGridHeight(gridContainerRef.current.offsetHeight);
+            }
+        };
+
+        updateGridHeight();
+        window.addEventListener('resize', updateGridHeight);
+        return () => window.removeEventListener('resize', updateGridHeight);
+    }, [tab, seccionesSeleccionadas]);
 
     // Handlers de CRUD
     const handleAgregarRamo = useCallback(() => {
@@ -228,11 +246,23 @@ function App() {
     }, []);
 
     // Import/Export
-    const handleExportar = useCallback(async () => {
+    const handleExportarExcel = useCallback(async () => {
+        try {
+            if (seccionesSeleccionadas.length === 0) {
+                alert('No hay secciones seleccionadas para exportar.\nSelecciona al menos una sección en tu horario.');
+                return;
+            }
+            await exportarHorarioExcel(seccionesSeleccionadas);
+        } catch (err) {
+            alert('Error al exportar Excel: ' + (err as Error).message);
+        }
+    }, [seccionesSeleccionadas]);
+
+    const handleExportarJSON = useCallback(async () => {
         try {
             await descargarDatos();
         } catch (err) {
-            alert('Error al exportar: ' + (err as Error).message);
+            alert('Error al exportar JSON: ' + (err as Error).message);
         }
     }, []);
 
@@ -320,7 +350,7 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="h-screen flex flex-col overflow-hidden">
             {/* Header */}
             <header className="glass-panel-dark px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
@@ -369,13 +399,17 @@ function App() {
 
                 {/* Botones de Import/Export */}
                 <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-2 md:px-4">
+                    <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-2 md:px-4" title="Importar datos desde JSON">
                         <span className="hidden sm:inline">📥 Importar</span>
                         <span className="sm:hidden">📥</span>
                     </button>
-                    <button onClick={handleExportar} className="btn-secondary text-xs md:text-sm px-2 md:px-4">
-                        <span className="hidden sm:inline">📤 Exportar</span>
-                        <span className="sm:hidden">📤</span>
+                    <button onClick={handleExportarJSON} className="btn-secondary text-xs md:text-sm px-2 md:px-4" title="Exportar todos los datos a JSON">
+                        <span className="hidden lg:inline">💾 JSON</span>
+                        <span className="lg:hidden">💾</span>
+                    </button>
+                    <button onClick={handleExportarExcel} className="btn-secondary text-xs md:text-sm px-2 md:px-4" title="Exportar horario visual a Excel">
+                        <span className="hidden lg:inline">📄 Excel</span>
+                        <span className="lg:hidden">📄</span>
                     </button>
                 </div>
             </header>
@@ -403,7 +437,7 @@ function App() {
             </div>
 
             {/* Main content */}
-            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+            <main className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden relative">
                 {tab === 'planner' ? (
                     <>
                         {/* Overlay para cerrar sidebar en móvil */}
@@ -415,12 +449,16 @@ function App() {
                         )}
 
                         {/* Sidebar - drawer en móvil, fijo en desktop */}
-                        <div className={`
-                            fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto
-                            transform transition-transform duration-300 ease-in-out
-                            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                            flex-shrink-0 h-full max-h-[100vh] lg:max-h-[calc(100vh-80px)] overflow-hidden
-                        `}>
+                        <div
+                            className={`
+                                fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto
+                                transform transition-transform duration-300 ease-in-out
+                                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                                flex-shrink-0 lg:h-full max-h-[100vh] lg:max-h-full
+                                p-3 md:p-6 pr-0 md:pr-0
+                            `}
+                            style={gridHeight ? { height: `${gridHeight}px` } : undefined}
+                        >
                             <Sidebar
                                 ramos={ramos}
                                 seccionesSeleccionadas={seccionesSeleccionadas}
@@ -436,7 +474,7 @@ function App() {
 
                         {/* Grid */}
                         <div className="flex-1 p-3 md:p-6 overflow-auto">
-                            <div className="glass-panel p-3 md:p-6">
+                            <div ref={gridContainerRef} className="glass-panel p-3 md:p-6">
                                 <ScheduleGrid
                                     seccionesSeleccionadas={seccionesSeleccionadas}
                                     previewSecciones={previewSecciones}
@@ -503,29 +541,34 @@ function App() {
                             </div>
                         </div>
                     </div>
-                )}
-            </main>
+                )
+                }
+            </main >
 
             {/* Modales */}
-            {modal.type === 'ramo' && (
-                <RamoForm
-                    ramo={modal.ramo}
-                    onSubmit={handleGuardarRamo}
-                    onCancel={() => setModal({ type: 'none' })}
-                    existingSiglas={ramos.map(r => r.sigla)}
-                />
-            )}
+            {
+                modal.type === 'ramo' && (
+                    <RamoForm
+                        ramo={modal.ramo}
+                        onSubmit={handleGuardarRamo}
+                        onCancel={() => setModal({ type: 'none' })}
+                        existingSiglas={ramos.map(r => r.sigla)}
+                    />
+                )
+            }
 
-            {modal.type === 'seccion' && modal.sigla && (
-                <SeccionForm
-                    sigla={modal.sigla}
-                    seccion={modal.seccion}
-                    siguienteNumero={getSiguienteNumeroSeccion(modal.sigla)}
-                    onSubmit={handleGuardarSeccion}
-                    onCancel={() => setModal({ type: 'none' })}
-                />
-            )}
-        </div>
+            {
+                modal.type === 'seccion' && modal.sigla && (
+                    <SeccionForm
+                        sigla={modal.sigla}
+                        seccion={modal.seccion}
+                        siguienteNumero={getSiguienteNumeroSeccion(modal.sigla)}
+                        onSubmit={handleGuardarSeccion}
+                        onCancel={() => setModal({ type: 'none' })}
+                    />
+                )
+            }
+        </div >
     );
 }
 
