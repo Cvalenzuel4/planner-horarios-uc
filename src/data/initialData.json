@@ -1,0 +1,866 @@
+{
+  "version": "1.0.0",
+  "fechaExportacion": "2025-12-27T21:27:17.030Z",
+  "ramos": [
+    {
+      "sigla": "DER113E",
+      "nombre": "Amor, Amistad y Bienestar",
+      "secciones": [
+        {
+          "id": "DER113E-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 5
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Leonardo Bruna"
+          }
+        },
+        {
+          "id": "DER113E-2",
+          "numero": 2,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 4
+                },
+                {
+                  "dia": "W",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Leonardo Bruna"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "FIL2006",
+      "nombre": "Introducción a la Argumentación",
+      "secciones": [
+        {
+          "id": "FIL2006-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 3
+                },
+                {
+                  "dia": "W",
+                  "modulo": 3
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Felipe Castañeda"
+          }
+        },
+        {
+          "id": "FIL2006-2",
+          "numero": 2,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 4
+                },
+                {
+                  "dia": "W",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Felipe Castañeda"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "ICS2123",
+      "nombre": "Modelos Estocásticos",
+      "secciones": [
+        {
+          "id": "ICS2123-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 2
+                },
+                {
+                  "dia": "W",
+                  "modulo": 2
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "V",
+                  "modulo": 2
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Victor Verdugo"
+          }
+        },
+        {
+          "id": "ICS2123-2",
+          "numero": 2,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 3
+                },
+                {
+                  "dia": "J",
+                  "modulo": 3
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "V",
+                  "modulo": 6
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Manuel Perez"
+          }
+        },
+        {
+          "id": "ICS2123-3",
+          "numero": 3,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 2
+                },
+                {
+                  "dia": "J",
+                  "modulo": 2
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "W",
+                  "modulo": 6
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Por Fijar"
+          }
+        },
+        {
+          "id": "ICS2123-4",
+          "numero": 4,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 1
+                },
+                {
+                  "dia": "J",
+                  "modulo": 1
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 6
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Andrés Navarro"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "ICS2523",
+      "nombre": "Microeconomía",
+      "secciones": [
+        {
+          "id": "ICS2523-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 2
+                },
+                {
+                  "dia": "W",
+                  "modulo": 2
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "V",
+                  "modulo": 2
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Ricardo Raineri"
+          }
+        },
+        {
+          "id": "ICS2523-2",
+          "numero": 2,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 3
+                },
+                {
+                  "dia": "W",
+                  "modulo": 3
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "V",
+                  "modulo": 3
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Ricardo Raineri"
+          }
+        },
+        {
+          "id": "ICS2523-3",
+          "numero": 3,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 1
+                },
+                {
+                  "dia": "W",
+                  "modulo": 1
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "V",
+                  "modulo": 1
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Miguel Perez de Arce"
+          }
+        },
+        {
+          "id": "ICS2523-4",
+          "numero": 4,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                },
+                {
+                  "dia": "J",
+                  "modulo": 4
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 5
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Patricia Galilea"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "IIC100G",
+      "nombre": "En Búsqueda del Bienestar",
+      "secciones": [
+        {
+          "id": "IIC100G-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 5
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Jorge Baier"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "IIC102G",
+      "nombre": "Inteligencia Artificial: Ciencia y Sociedad",
+      "secciones": [
+        {
+          "id": "IIC102G-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 5
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Rodrigo Toro"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "IIC1062",
+      "nombre": "AYU Excel",
+      "secciones": [
+        {
+          "id": "IIC1062-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Hugo Spencer"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "IIC2233",
+      "nombre": "Programación Avanzada",
+      "secciones": [
+        {
+          "id": "IIC2233-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "J",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 5
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Por Fijar"
+          }
+        },
+        {
+          "id": "IIC2233-2",
+          "numero": 2,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "J",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 5
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Pablo Araneda"
+          }
+        },
+        {
+          "id": "IIC2233-3",
+          "numero": 3,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "J",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Por Fijar"
+          }
+        },
+        {
+          "id": "IIC2233-4",
+          "numero": 4,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "J",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Tamara Vidal"
+          }
+        },
+        {
+          "id": "IIC2233-5",
+          "numero": 5,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "J",
+                  "modulo": 5
+                },
+                {
+                  "dia": "J",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "ayudantia",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Daniela Concha"
+          }
+        }
+      ]
+    },
+    {
+      "sigla": "ING2030",
+      "nombre": "Investigación, Innovación y Emprendimiento",
+      "secciones": [
+        {
+          "id": "ING2030-1",
+          "numero": 1,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "L",
+                  "modulo": 1
+                },
+                {
+                  "dia": "W",
+                  "modulo": 1
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Michael Leatherbee"
+          }
+        },
+        {
+          "id": "ING2030-2",
+          "numero": 2,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 2
+                },
+                {
+                  "dia": "J",
+                  "modulo": 2
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Alfonso Cruz"
+          }
+        },
+        {
+          "id": "ING2030-3",
+          "numero": 3,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 2
+                },
+                {
+                  "dia": "J",
+                  "modulo": 2
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Juan Carlos Ferrer"
+          }
+        },
+        {
+          "id": "ING2030-4",
+          "numero": 4,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 2
+                },
+                {
+                  "dia": "J",
+                  "modulo": 2
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Isabel Hilliger"
+          }
+        },
+        {
+          "id": "ING2030-5",
+          "numero": 5,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                },
+                {
+                  "dia": "J",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Andrés Johnson"
+          }
+        },
+        {
+          "id": "ING2030-6",
+          "numero": 6,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                },
+                {
+                  "dia": "J",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Pablo Cifuentes"
+          }
+        },
+        {
+          "id": "ING2030-7",
+          "numero": 7,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                },
+                {
+                  "dia": "J",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Constanza Miranda"
+          }
+        },
+        {
+          "id": "ING2030-8",
+          "numero": 8,
+          "actividades": [
+            {
+              "tipo": "catedra",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 6
+                }
+              ]
+            },
+            {
+              "tipo": "taller",
+              "bloques": [
+                {
+                  "dia": "M",
+                  "modulo": 4
+                },
+                {
+                  "dia": "J",
+                  "modulo": 4
+                }
+              ]
+            }
+          ],
+          "metadatos": {
+            "profesor": "Pedro Bouchon"
+          }
+        }
+      ]
+    }
+  ],
+  "config": {
+    "id": "default",
+    "seccionesSeleccionadas": [],
+    "ultimaActualizacion": 1766870819101
+  }
+}
