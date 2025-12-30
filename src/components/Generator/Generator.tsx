@@ -14,7 +14,8 @@ import { ScheduleGrid } from '../Grid';
 interface GeneratorProps {
     ramos: Ramo[];
     onNuevosRamos: (ramos: Ramo[]) => Promise<void>;
-    onLimpiarRamos: () => void; // Used? Maybe we should expose a button for it.
+    onLimpiarRamos: () => void;
+    onEliminarRamos: (siglas: string[]) => Promise<void>;
     onAplicarResultado: (secciones: SeccionConMask[]) => void;
     // Removed unused preview props
 }
@@ -23,6 +24,7 @@ export const Generator: React.FC<GeneratorProps> = ({
     ramos: ramosLocales,
     onNuevosRamos,
     onLimpiarRamos,
+    onEliminarRamos,
     onAplicarResultado,
 }) => {
     // ---------- Hook para cargar cursos desde API ----------
@@ -34,6 +36,7 @@ export const Generator: React.FC<GeneratorProps> = ({
         erroresPorSigla,
         fetchAllCourses,
         clearCourses,
+        removeCourses,
     } = useCourseGenerator();
 
     // ---------- Estados para input de siglas ----------
@@ -322,13 +325,31 @@ export const Generator: React.FC<GeneratorProps> = ({
                                     </div>
                                     <button
                                         onClick={() => {
-                                            if (confirm('¿Eliminar todos los ramos?')) {
-                                                clearCourses();
-                                                onLimpiarRamos();
+                                            if (ramosSeleccionados.size === 0) {
+                                                if (confirm('¿Eliminar todos los ramos?')) {
+                                                    clearCourses();
+                                                    onLimpiarRamos();
+                                                }
+                                            } else {
+                                                if (confirm(`¿Eliminar ${ramosSeleccionados.size} ramos seleccionados?`)) {
+                                                    const siglasParaEliminar = Array.from(ramosSeleccionados);
+
+                                                    // 1. Eliminar de la BD / Estado global
+                                                    onEliminarRamos(siglasParaEliminar);
+
+                                                    // 2. Limpiar selección local
+                                                    const nuevosFiltros = new Map(seccionesFiltradas);
+                                                    siglasParaEliminar.forEach(s => nuevosFiltros.delete(s));
+                                                    setSeccionesFiltradas(nuevosFiltros);
+                                                    setRamosSeleccionados(new Set());
+
+                                                    // 3. Eliminar de la API si existen
+                                                    removeCourses(siglasParaEliminar);
+                                                }
                                             }
                                         }}
                                         className="text-red-500 hover:text-red-700 flex items-center gap-1"
-                                        title="Eliminar todos los ramos"
+                                        title={ramosSeleccionados.size > 0 ? "Eliminar seleccionados" : "Eliminar todos"}
                                     >
                                         🗑️
                                     </button>
@@ -486,7 +507,6 @@ export const Generator: React.FC<GeneratorProps> = ({
                                 <div className="flex items-center gap-3">
                                     <div className="flex flex-col">
                                         <span className="text-lg font-bold text-gray-800 leading-none">Opción {activeIndex + 1}</span>
-                                        <span className="text-xs text-gray-400 font-mono mt-0.5">ID: {resultados[activeIndex].id.substring(0, 8)}</span>
                                     </div>
                                 </div>
                                 <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">

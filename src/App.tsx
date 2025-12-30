@@ -15,13 +15,15 @@ import {
     descargarDatos,
     subirDatos,
     limpiarTodosRamos,
+    eliminarRamo,
 } from './db';
 import {
     ScheduleGrid,
     Generator,
-    CourseSearch
+    CourseSearch,
+    SelectedCoursesList
 } from './components';
-import { checkHealth } from './services';
+import { checkHealth, obtenerVacantes } from './services';
 import { exportarHorarioExcel } from './utils/excelExport';
 
 type Tab = 'planner' | 'generator';
@@ -38,6 +40,7 @@ function App() {
     const [tab, setTab] = useState<Tab>('planner');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [gridHeight, setGridHeight] = useState<number | null>(null);
+    const [searchRequest, setSearchRequest] = useState<{ term: string; timestamp: number } | null>(null);
 
     // Ref para medir la altura del grid
     const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -141,9 +144,20 @@ function App() {
                 nuevas.delete(seccion.id);
             } else {
                 nuevas.add(seccion.id);
+                // Prefetch de vacantes (fire-and-forget) para que esté listo al abrir detalles
+                if (seccion.nrc) {
+                    obtenerVacantes(seccion.nrc).catch(console.error);
+                }
             }
             return nuevas;
         });
+    }, []);
+
+    // Handler para buscar de nuevo un ramo desde la lista
+    const handleSearchAgain = useCallback((sigla: string) => {
+        setSearchRequest({ term: sigla, timestamp: Date.now() });
+        setSidebarOpen(true);
+        // Desplazar al top en móvil si fuera necesario
     }, []);
 
     // Import/Export
@@ -197,6 +211,13 @@ function App() {
         setSeccionesSeleccionadasIds(new Set(secciones.map(s => s.id)));
         setPreviewSecciones([]);
         setTab('planner');
+
+        // Prefetch vacantes para todos los ramos del horario generado
+        secciones.forEach(s => {
+            if (s.nrc) {
+                obtenerVacantes(s.nrc).catch(console.error);
+            }
+        });
     }, []);
 
     // Limpiar todas las secciones seleccionadas
@@ -216,6 +237,31 @@ function App() {
             console.error('Error al limpiar ramos:', err);
         }
     }, []);
+
+    // Eliminar ramos seleccionados
+    const handleEliminarRamos = useCallback(async (siglas: string[]) => {
+        try {
+            // Eliminar de BD
+            await Promise.all(siglas.map(sigla => eliminarRamo(sigla)));
+
+            // Actualizar estado local
+            setRamos(prev => prev.filter(r => !siglas.includes(r.sigla)));
+
+            // Limpiar secciones seleccionadas de estos ramos
+            setSeccionesSeleccionadasIds(prev => {
+                const nuevas = new Set(prev);
+                const seccionesDeEliminados = ramos
+                    .filter(r => siglas.includes(r.sigla))
+                    .flatMap(r => r.secciones.map(s => s.id));
+
+                seccionesDeEliminados.forEach(id => nuevas.delete(id));
+                return nuevas;
+            });
+        } catch (err) {
+            console.error('Error al eliminar ramos:', err);
+            alert('Error al eliminar ramos: ' + (err as Error).message);
+        }
+    }, [ramos]);
 
     if (loading) {
         return (
@@ -334,7 +380,6 @@ function App() {
             </div>
 
             {/* Main content */}
-            {/* Main content */}
             <main className="flex-1 min-h-0 relative overflow-hidden">
                 {/* PLANNER TAB */}
                 <div className={`flex flex-col lg:flex-row h-full w-full ${tab === 'planner' ? 'flex' : 'hidden'}`}>
@@ -361,6 +406,7 @@ function App() {
                             seccionesSeleccionadasIds={seccionesSeleccionadasIds}
                             onToggleSeccion={handleToggleSeccion}
                             onNuevosRamos={handleNuevosRamos}
+                            externalSearchRequest={searchRequest}
                         />
                     </div>
 
@@ -417,6 +463,13 @@ function App() {
                                 </button>
                             )}
                         </div>
+
+                        {/* Lista de cursos seleccionados */}
+                        <SelectedCoursesList
+                            secciones={seccionesSeleccionadas}
+                            onRemove={handleToggleSeccion}
+                            onSearch={handleSearchAgain}
+                        />
                     </div>
                 </div>
 
@@ -426,6 +479,7 @@ function App() {
                         ramos={ramos}
                         onNuevosRamos={handleNuevosRamos}
                         onLimpiarRamos={handleLimpiarRamos}
+                        onEliminarRamos={handleEliminarRamos}
                         onAplicarResultado={handleAplicarResultado}
                     />
                 </div>

@@ -3,6 +3,7 @@
  * Muestra información detallada de un ramo/sección al hacer clic en el horario
  */
 
+import { useState, useEffect } from 'react';
 import {
     SeccionConMask,
     TipoActividad,
@@ -11,6 +12,8 @@ import {
     NOMBRES_DIA,
     HORARIOS_MODULOS,
 } from '../../types';
+import { VacanteAPI } from '../../services/api.types';
+import { obtenerVacantes } from '../../services/buscacursos.service';
 
 interface SectionInfoModalProps {
     isOpen: boolean;
@@ -25,6 +28,27 @@ export const SectionInfoModal: React.FC<SectionInfoModalProps> = ({
     seccion,
     tipoActividad = 'catedra',
 }) => {
+    const [vacantes, setVacantes] = useState<VacanteAPI[]>([]);
+    const [loadingVacantes, setLoadingVacantes] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && seccion?.nrc) {
+            setLoadingVacantes(true);
+            setVacantes([]);
+            // Asumimos semestre actual definido en servicio
+            obtenerVacantes(seccion.nrc)
+                .then(result => {
+                    if (result.success) {
+                        setVacantes(result.vacantes);
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => setLoadingVacantes(false));
+        } else {
+            setVacantes([]);
+        }
+    }, [isOpen, seccion]);
+
     if (!isOpen || !seccion) return null;
 
     const colores = COLORES_ACTIVIDAD[tipoActividad];
@@ -54,7 +78,7 @@ export const SectionInfoModal: React.FC<SectionInfoModalProps> = ({
             />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-gray-200">
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-gray-200 max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className={`px-6 py-4 border-b border-gray-100 ${colores.bg} ${colores.border}`}>
                     <div className="flex items-center justify-between">
@@ -102,6 +126,45 @@ export const SectionInfoModal: React.FC<SectionInfoModalProps> = ({
                             </div>
                         )}
                     </div>
+
+                    {/* Vacantes */}
+                    {(loadingVacantes || vacantes.length > 0) && (
+                        <div className="mb-5">
+                            <h4 className="text-gray-500 text-sm font-medium mb-2">Vacantes:</h4>
+                            <div className="bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                                {loadingVacantes ? (
+                                    <div className="p-4 text-center text-gray-400 text-sm">
+                                        Cargando disponibilidad...
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-100 text-gray-500 font-medium h-2">
+                                            <tr>
+                                                <th className="px-3 py-2 text-left font-normal">Escuela/Reserva</th>
+                                                <th className="px-3 py-2 text-center font-normal">Disp.</th>
+                                                <th className="px-3 py-2 text-center font-normal">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {vacantes.map((v, i) => (
+                                                <tr key={i} className="hover:bg-white/50">
+                                                    <td className="px-3 py-2 text-gray-700">
+                                                        {v.escuela || v.programa || v.concentracion || v.categoria || 'General'}
+                                                    </td>
+                                                    <td className={`px-3 py-2 text-center font-medium ${v.disponibles > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                        {v.disponibles}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center text-gray-500">
+                                                        {v.ofrecidas}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Horarios por tipo de actividad */}
                     <div className="space-y-3">

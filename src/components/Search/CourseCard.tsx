@@ -47,11 +47,6 @@ export function CourseCard({ curso, seccionesSeleccionadasIds, onToggleSeccion }
                     <div className="flex items-center gap-3 mb-1">
                         <span className="text-xl font-bold text-gray-800">{info.sigla}-{info.seccion}</span>
                         <span className="bg-gray-100 px-2 py-0.5 rounded text-xs font-medium text-gray-600">NRC: {info.nrc}</span>
-                        {info.requiereLaboratorio && (
-                            <span className="bg-sky-50 text-sky-600 px-2 py-0.5 rounded text-xs border border-sky-200">
-                                Requiere Lab
-                            </span>
-                        )}
                     </div>
 
                     <h3 className="text-lg font-medium text-orange-600 truncate mb-2">{info.nombre}</h3>

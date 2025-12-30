@@ -11,6 +11,8 @@ import {
     DIA_API_MAP,
     TIPO_ACTIVIDAD_API_MAP,
     esModuloValido,
+    VacanteAPI,
+    VacantesResponse,
 } from './api.types';
 import { Ramo, Seccion, Actividad, Bloque, TipoActividad, Modulo } from '../types';
 
@@ -187,6 +189,107 @@ export async function buscarCursos(
             success: false,
             ramos: [],
             cursosAPI: [],
+            message: `Error de conexión: ${error instanceof Error ? error.message : 'desconocido'}`,
+        };
+    }
+}
+
+// ============================================================================
+// INFORMACIÓN DE VACANTES
+// ============================================================================
+
+/** Resultado de solicitud de vacantes */
+export interface VacantesResult {
+    success: boolean;
+    vacantes: VacanteAPI[];
+    message: string;
+}
+
+/** Cache de vacantes en memoria: NRC -> { data, timestamp } */
+const vacantesCache = new Map<string, { data: VacanteAPI[]; timestamp: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+/**
+ * Obtiene el detalle de vacantes de un curso por NRC
+ * Usa caché si la información tiene menos de 5 minutos
+ */
+export async function obtenerVacantes(
+    nrc: string,
+    semestre: string = SEMESTRE_ACTUAL
+): Promise<VacantesResult> {
+    // 1. Revisar caché
+    const now = Date.now();
+    const cached = vacantesCache.get(nrc);
+
+    if (cached) {
+        const edad = now - cached.timestamp;
+        if (edad < CACHE_TTL_MS) {
+            console.log(`[Cache Hit] Vacantes para NRC ${nrc} (edad: ${Math.round(edad / 1000)}s)`);
+            return {
+                success: true,
+                vacantes: cached.data,
+                message: 'Obtenido desde caché',
+            };
+        } else {
+            console.log(`[Cache Expired] Vacantes para NRC ${nrc}`);
+            vacantesCache.delete(nrc);
+        }
+    }
+
+    // 2. Fetch de API
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+        const url = `${API_BASE_URL}/api/v1/cursos/vacantes?nrc=${nrc}&semestre=${semestre}`;
+
+        const response = await fetch(url, {
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            return {
+                success: false,
+                vacantes: [],
+                message: `Error HTTP ${response.status}`,
+            };
+        }
+
+        const data: VacantesResponse = await response.json();
+
+        if (!data.success) {
+            return {
+                success: false,
+                vacantes: [],
+                message: data.message || 'Error al obtener vacantes',
+            };
+        }
+
+        // 3. Guardar en caché
+        vacantesCache.set(nrc, {
+            data: data.data,
+            timestamp: now,
+        });
+
+        return {
+            success: true,
+            vacantes: data.data,
+            message: data.message,
+        };
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+            return {
+                success: false,
+                vacantes: [],
+                message: 'La solicitud tardó demasiado.',
+            };
+        }
+
+        return {
+            success: false,
+            vacantes: [],
             message: `Error de conexión: ${error instanceof Error ? error.message : 'desconocido'}`,
         };
     }

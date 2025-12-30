@@ -24,6 +24,7 @@ export interface UseCourseGeneratorReturn {
     // Acciones
     fetchAllCourses: (siglas: string[], semestre?: string) => Promise<Ramo[]>;
     clearCourses: () => void;
+    removeCourses: (siglas: string[]) => void;
 }
 
 /**
@@ -126,6 +127,11 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
         setError(null);
     }, []);
 
+    const removeCourses = useCallback((siglas: string[]) => {
+        const setSiglas = new Set(siglas);
+        setCursosAPI(prev => prev.filter(ramo => !setSiglas.has(ramo.sigla)));
+    }, []);
+
     return {
         isLoading,
         loadingProgress,
@@ -134,5 +140,6 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
         erroresPorSigla,
         fetchAllCourses,
         clearCourses,
+        removeCourses,
     };
 }

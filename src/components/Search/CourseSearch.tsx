@@ -17,9 +17,10 @@ interface CourseSearchProps {
     seccionesSeleccionadasIds: Set<string>;
     onToggleSeccion: (seccion: SeccionConMask) => void;
     onNuevosRamos: (ramos: Ramo[]) => Promise<void>;
+    externalSearchRequest?: { term: string; timestamp: number } | null;
 }
 
-export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNuevosRamos }: CourseSearchProps) {
+export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNuevosRamos, externalSearchRequest }: CourseSearchProps) {
     const [query, setQuery] = useState('');
     const [semestre, setSemestre] = useState(SEMESTRE_ACTUAL);
     const [loading, setLoading] = useState(false);
@@ -28,7 +29,15 @@ export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNue
     const [error, setError] = useState<string | null>(null);
     const [searched, setSearched] = useState(false);
 
-
+    // Reaccionar a búsquedas externas
+    useEffect(() => {
+        if (externalSearchRequest) {
+            setQuery(externalSearchRequest.term);
+            // Pequeño timeout para asegurar que el estado se actualice antes de buscar,
+            // aunque handleSearch acepta argumento opcional para forzar el término
+            handleSearch(externalSearchRequest.term);
+        }
+    }, [externalSearchRequest]);
 
     // Health check al montar
     useEffect(() => {
@@ -89,11 +98,31 @@ export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNue
                             onChange={(e) => setQuery(e.target.value.toUpperCase())}
                             onKeyDown={handleKeyDown}
                             placeholder="Ej: ICS2123"
-                            className="input-styled pl-10 h-10 w-full"
+                            className="input-styled pl-11 pr-10 h-10 w-full"
+                            style={{ paddingLeft: '44px' }}
                             autoFocus
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
                         </div>
+                        {query && (
+                            <button
+                                onClick={() => {
+                                    setQuery('');
+                                    setResults([]);
+                                    setSearched(false);
+                                    setError(null);
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                                title="Limpiar búsqueda"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
 
                     {/* Selector de semestre - ancho automático, no crece */}

@@ -19,6 +19,28 @@ export interface APIResponse {
     };
 }
 
+/** Detalle de una fila de vacantes */
+export interface VacanteAPI {
+    escuela: string;
+    programa: string;
+    concentracion: string;
+    categoria: string;
+    ofrecidas: number;
+    ocupadas: number;
+    disponibles: number;
+}
+
+/** Respuesta del endpoint de vacantes */
+export interface VacantesResponse {
+    success: boolean;
+    data: VacanteAPI[];
+    message: string;
+    meta: {
+        nrc: string;
+        semestre: string;
+    };
+}
+
 /** Curso tal como viene de la API */
 export interface CursoAPI {
     nrc: string;
