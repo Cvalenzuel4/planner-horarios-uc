@@ -2,15 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Variables CSS globales */
+/* Variables CSS globales - Clean UI Theme */
 :root {
-  --color-catedra: #FBBF24;
-  --color-laboratorio: #7DD3FC;
-  --color-ayudantia: #34D399;
-  --color-taller: #C084FC;
-  --color-terreno: #B45309;
-  --color-practica: #DC2626;
-  --color-otro: #9CA3AF;
+  /* Colores institucionales */
+  --color-primary: #EA580C;
+  /* Orange CTA */
+  --color-primary-hover: #C2410C;
+  --color-institutional: #003366;
+  /* Azul UC */
+
+  /* Colores de actividad (para leyenda) */
+  --color-catedra: #F59E0B;
+  --color-laboratorio: #0EA5E9;
+  --color-ayudantia: #10B981;
+  --color-taller: #8B5CF6;
+  --color-terreno: #EA580C;
+  --color-practica: #EF4444;
+  --color-otro: #6B7280;
   --color-conflicto: #EF4444;
 }
 
@@ -23,29 +31,29 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+  background: #F3F4F6;
   min-height: 100vh;
-  color: #f1f5f9;
+  color: #1f2937;
 }
 
-/* Estilos del scrollbar */
+/* Estilos del scrollbar - Light theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: #E5E7EB;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: #9CA3AF;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: #6B7280;
 }
 
 /* Animación de conflicto */
@@ -66,45 +74,45 @@ body {
   border: 2px solid var(--color-conflicto);
 }
 
-/* Glassmorphism panels */
+/* Clean UI panels - Solid white cards */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: white;
+  border: 1px solid #E5E7EB;
   border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .glass-panel-dark {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+  border-radius: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Botón primario */
+/* Botón primario - Orange CTA */
 .btn-primary {
-  @apply px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95;
+  @apply px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
 }
 
-/* Botón secundario */
+/* Botón secundario - Light theme */
 .btn-secondary {
-  @apply px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg border border-white/20 transition-all duration-200 hover:border-white/40 active:scale-95;
+  @apply px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg border border-gray-200 transition-all duration-200 hover:border-gray-300 active:scale-95;
 }
 
 /* Botón de peligro */
 .btn-danger {
-  @apply px-4 py-2 bg-red-500/80 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 active:scale-95;
+  @apply px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 active:scale-95;
 }
 
-/* Input estilizado */
+/* Input estilizado - Light theme */
 .input-styled {
-  @apply w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30 transition-all duration-200;
+  @apply w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200;
 }
 
-/* Select estilizado */
+/* Select estilizado - Light theme */
 .select-styled {
-  @apply w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30 transition-all duration-200 cursor-pointer appearance-none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  @apply px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200 cursor-pointer appearance-none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
@@ -112,27 +120,27 @@ body {
 }
 
 .select-styled option {
-  background: #1e1b4b;
-  color: white;
+  background: white;
+  color: #1f2937;
 }
 
-/* Celda del grid */
+/* Celda del grid - Light theme */
 .grid-cell {
-  @apply relative min-h-[60px] border border-white/10 rounded-lg transition-all duration-150 hover:border-white/30;
+  @apply relative min-h-[60px] border border-gray-100 rounded-lg transition-all duration-150 hover:border-gray-200 bg-gray-50/50;
 }
 
 .grid-cell-header {
-  @apply bg-white/5 font-semibold text-center py-3 text-sm;
+  @apply bg-white font-semibold text-gray-700 text-center py-3 text-sm border border-gray-100 rounded-lg;
 }
 
 /* Bloque de horario */
 .schedule-block {
-  @apply absolute inset-1 rounded-md flex flex-col justify-center items-center text-xs font-medium shadow-md transition-transform duration-150 hover:scale-[1.02] hover:z-10 cursor-pointer;
+  @apply absolute inset-1 rounded-md flex flex-col justify-center items-center text-xs font-medium shadow-sm transition-transform duration-150 hover:scale-[1.02] hover:z-10 cursor-pointer;
 }
 
-/* Checkbox estilizado */
+/* Checkbox estilizado - Light theme */
 .checkbox-styled {
-  @apply w-5 h-5 rounded border-2 border-white/30 bg-white/10 checked:bg-indigo-500 checked:border-indigo-500 focus:ring-2 focus:ring-indigo-400/30 focus:ring-offset-0 transition-all duration-150 cursor-pointer;
+  @apply w-5 h-5 rounded border-2 border-gray-300 bg-white checked:bg-orange-500 checked:border-orange-500 focus:ring-2 focus:ring-orange-500/30 focus:ring-offset-0 transition-all duration-150 cursor-pointer;
 }
 
 /* Tooltip */
@@ -146,12 +154,12 @@ body {
 
 /* Modal overlay */
 .modal-overlay {
-  @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4;
+  @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center p-4;
 }
 
-/* Modal content */
+/* Modal content - Light theme */
 .modal-content {
-  @apply bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-white/10 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+  @apply bg-white rounded-2xl shadow-xl border border-gray-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
 }
 
 /* Badge */
@@ -164,9 +172,9 @@ body {
   @apply transition-all duration-300 ease-in-out;
 }
 
-/* Loader */
+/* Loader - Light theme */
 .loader {
-  @apply w-8 h-8 border-4 border-white/20 border-t-indigo-500 rounded-full animate-spin;
+  @apply w-8 h-8 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin;
 }
 
 /* ============================================
@@ -217,12 +225,6 @@ body {
   .modal-content {
     @apply max-h-[95vh] mx-2;
   }
-
-  /* Glassmorphism más sutil en móvil para rendimiento */
-  .glass-panel,
-  .glass-panel-dark {
-    backdrop-filter: blur(8px);
-  }
 }
 
 /* Tablets (640px - 1024px) */
@@ -242,7 +244,7 @@ body {
   button:focus-visible,
   input:focus-visible,
   select:focus-visible {
-    @apply outline-2 outline-offset-2 outline-indigo-400;
+    @apply outline-2 outline-offset-2 outline-orange-500;
   }
 }
 
@@ -261,8 +263,6 @@ body {
     animation: none;
   }
 }
-
-/* Modo oscuro del sistema ya está cubierto por el diseño base */
 
 /* Safe area para dispositivos con notch */
 @supports (padding: max(0px)) {

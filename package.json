@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@types/file-saver": "^2.0.7",
+    "@vercel/analytics": "^1.6.1",
     "dexie": "^4.0.9",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",

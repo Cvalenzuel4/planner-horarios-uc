@@ -119,7 +119,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         if (bloques.length === 0) {
             return (
                 <div
-                    className="grid-cell bg-white/5 hover:bg-white/10 cursor-pointer"
+                    className="grid-cell bg-gray-50 hover:bg-gray-100 cursor-pointer"
                     onClick={() => onBloqueClick?.(dia, modulo, [])}
                 />
             );
@@ -178,9 +178,9 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         <div className="grid-cell-header bg-transparent" />
                         {/* Nombres de días */}
                         {DIAS.map((dia) => (
-                            <div key={dia} className="grid-cell-header glass-panel">
-                                <span className="text-white font-bold">{dia}</span>
-                                <span className="text-white/60 text-xs block">{NOMBRES_DIA[dia]}</span>
+                            <div key={dia} className="grid-cell-header">
+                                <span className="text-gray-800 font-semibold">{dia}</span>
+                                <span className="text-gray-500 text-xs block">{NOMBRES_DIA[dia]}</span>
                             </div>
                         ))}
                     </div>
@@ -189,9 +189,9 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     {MODULOS.slice(0, 4).map((modulo) => (
                         <div key={modulo} className="grid grid-cols-7 gap-1 mb-1">
                             {/* Etiqueta del módulo */}
-                            <div className="grid-cell-header glass-panel flex flex-col justify-center">
-                                <span className="text-white font-bold">M{modulo}</span>
-                                <span className="text-white/60 text-[10px]">
+                            <div className="grid-cell-header flex flex-col justify-center">
+                                <span className="text-gray-800 font-semibold">M{modulo}</span>
+                                <span className="text-gray-500 text-[10px]">
                                     {HORARIOS_MODULOS[modulo].inicio} - {HORARIOS_MODULOS[modulo].fin}
                                 </span>
                             </div>
@@ -204,16 +204,14 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         </div>
                     ))}
 
-                    {/* Separador de almuerzo */}
+                    {/* Separador de almuerzo - línea delgada */}
                     <div className="grid grid-cols-7 gap-1 mb-1">
-                        <div className="col-span-7 py-2 text-center">
-                            <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-yellow-500/20 text-yellow-300 text-sm">
-                                <span>🍽️</span>
-                                <span>ALMUERZO</span>
-                                <span className="text-xs opacity-70">
-                                    {ALMUERZO.inicio} - {ALMUERZO.fin}
-                                </span>
-                            </div>
+                        <div className="col-span-7 flex items-center gap-3 py-1">
+                            <div className="flex-1 h-px bg-gray-200"></div>
+                            <span className="text-xs text-gray-400 font-medium">
+                                Almuerzo {ALMUERZO.inicio} - {ALMUERZO.fin}
+                            </span>
+                            <div className="flex-1 h-px bg-gray-200"></div>
                         </div>
                     </div>
 
@@ -221,9 +219,9 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     {MODULOS.slice(4).map((modulo) => (
                         <div key={modulo} className="grid grid-cols-7 gap-1 mb-1">
                             {/* Etiqueta del módulo */}
-                            <div className="grid-cell-header glass-panel flex flex-col justify-center">
-                                <span className="text-white font-bold">M{modulo}</span>
-                                <span className="text-white/60 text-[10px]">
+                            <div className="grid-cell-header flex flex-col justify-center">
+                                <span className="text-gray-800 font-semibold">M{modulo}</span>
+                                <span className="text-gray-500 text-[10px]">
                                     {HORARIOS_MODULOS[modulo].inicio} - {HORARIOS_MODULOS[modulo].fin}
                                 </span>
                             </div>

@@ -64,12 +64,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     return (
-        <aside className="w-[330px] h-full glass-panel-dark flex flex-col overflow-hidden">
+        <aside className="w-[330px] h-full bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col overflow-hidden p-4 m-3">
             {/* Header fijo */}
-            <div className="flex-shrink-0 p-4 pb-0">
+            <div className="flex-shrink-0">
                 {/* Título y botón */}
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-white">Mis Ramos</h2>
+                    <h2 className="text-xl font-bold text-gray-800">Mis Ramos</h2>
                     <button
                         onClick={onAgregarRamo}
                         className="btn-primary text-sm flex items-center gap-1"
@@ -87,22 +87,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             placeholder="Buscar por sigla..."
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
-                            className="w-full px-4 py-2 pl-10 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-colors"
+                            className="input-styled pl-10"
                         />
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                             🔍
                         </span>
                         {busqueda && (
                             <button
                                 onClick={() => setBusqueda('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 ✕
                             </button>
                         )}
                     </div>
                     {busqueda && (
-                        <p className="text-xs text-white/40 mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                             {ramosFiltrados.length} resultado{ramosFiltrados.length !== 1 ? 's' : ''}
                         </p>
                     )}
@@ -110,15 +110,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Lista de ramos con scroll independiente */}
-            <div className="flex-1 min-h-0 px-4 pb-4 overflow-y-auto">
+            <div className="flex-1 min-w-0 overflow-y-auto">
                 {ramos.length === 0 ? (
-                    <div className="text-center py-8 text-white/50">
+                    <div className="text-center py-8 text-gray-400">
                         <p className="text-4xl mb-2">📚</p>
                         <p>No hay ramos agregados</p>
                         <p className="text-sm mt-1">Haz clic en "Agregar" para comenzar</p>
                     </div>
                 ) : ramosFiltrados.length === 0 ? (
-                    <div className="text-center py-8 text-white/50">
+                    <div className="text-center py-8 text-gray-400">
                         <p className="text-2xl mb-2">🔍</p>
                         <p>No se encontraron ramos</p>
                         <p className="text-sm mt-1">con la sigla "{busqueda}"</p>
@@ -130,22 +130,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             const seccionesPreparadas = prepararRamo(ramo);
 
                             return (
-                                <div key={ramo.sigla} className="glass-panel overflow-hidden">
+                                <div key={ramo.sigla} className="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
                                     {/* Header del ramo */}
                                     <div
-                                        className="p-3 cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-between"
+                                        className="p-3 cursor-pointer hover:bg-gray-100 transition-colors flex items-center justify-between"
                                         onClick={() => toggleExpandido(ramo.sigla)}
                                     >
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-bold text-indigo-300">
+                                                <span className="text-sm font-bold text-orange-600">
                                                     {ramo.sigla}
                                                 </span>
-                                                <span className="text-xs text-white/50">
+                                                <span className="text-xs text-gray-400">
                                                     ({ramo.secciones.length} secciones)
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-white/80 truncate">{ramo.nombre}</p>
+                                            <p className="text-sm text-gray-600 truncate">{ramo.nombre}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                     e.stopPropagation();
                                                     onEditarRamo(ramo);
                                                 }}
-                                                className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white transition-colors"
+                                                className="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors"
                                                 title="Editar ramo"
                                             >
                                                 ✏️
@@ -165,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                         onEliminarRamo(ramo.sigla);
                                                     }
                                                 }}
-                                                className="p-1 hover:bg-red-500/20 rounded text-white/60 hover:text-red-400 transition-colors"
+                                                className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-500 transition-colors"
                                                 title="Eliminar ramo"
                                             >
                                                 🗑️
@@ -184,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     >
                                         <div className="px-3 pb-3 space-y-2">
                                             {seccionesPreparadas.length === 0 ? (
-                                                <p className="text-sm text-white/40 text-center py-2">
+                                                <p className="text-sm text-gray-400 text-center py-2">
                                                     Sin secciones
                                                 </p>
                                             ) : (
@@ -197,9 +197,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                             key={seccion.id}
                                                             className={`p-2 rounded-lg transition-colors ${seleccionada
                                                                 ? conflicto
-                                                                    ? 'bg-red-500/20 border border-red-500/50'
-                                                                    : 'bg-indigo-500/20 border border-indigo-500/50'
-                                                                : 'bg-white/5 hover:bg-white/10'
+                                                                    ? 'bg-red-50 border border-red-300'
+                                                                    : 'bg-orange-50 border border-orange-300'
+                                                                : 'bg-white hover:bg-gray-50 border border-gray-200'
                                                                 }`}
                                                         >
                                                             <div className="flex items-center gap-2">
@@ -210,11 +210,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                                     className="checkbox-styled"
                                                                 />
                                                                 <div className="flex-1 min-w-0">
-                                                                    <span className="text-sm font-medium">
+                                                                    <span className="text-sm font-medium text-gray-700">
                                                                         Sección {seccion.numero}
                                                                     </span>
                                                                     {seccion.metadatos.profesor && (
-                                                                        <p className="text-xs text-white/50 truncate">
+                                                                        <p className="text-xs text-gray-500 truncate">
                                                                             {seccion.metadatos.profesor}
                                                                         </p>
                                                                     )}

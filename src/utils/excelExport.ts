@@ -276,7 +276,7 @@ export async function exportarHorarioExcel(seccionesSeleccionadas: SeccionConMas
     const filaInicioDetalles = MODULOS.length + 5; // 3 filas vacías después
 
     // Encabezados de la tabla de detalles
-    const encabezadosDetalles = ['Sigla', 'Sección', 'Nombre del Curso', 'Profesor', 'Tipo'];
+    const encabezadosDetalles = ['NRC', 'Sigla', 'Sección', 'Nombre del Curso', 'Profesor', 'Tipo'];
     encabezadosDetalles.forEach((header, index) => {
         const cell = worksheet.getCell(filaInicioDetalles, index + 1);
         cell.value = header;
@@ -309,6 +309,7 @@ export async function exportarHorarioExcel(seccionesSeleccionadas: SeccionConMas
         }).join(', ');
 
         const datosSeccion = [
+            seccion.nrc || '-',
             seccion.ramoSigla,
             seccion.numero,
             seccion.ramoNombre,
@@ -321,8 +322,9 @@ export async function exportarHorarioExcel(seccionesSeleccionadas: SeccionConMas
             cell.value = valor;
             cell.font = { size: 10 };
             cell.alignment = {
-                horizontal: colIndex === 1 ? 'center' : 'left',
+                horizontal: (colIndex === 0 || colIndex === 2) ? 'center' : 'left', // NRC (0) y Sección (2) centrados
                 vertical: 'middle',
+                wrapText: true,
             };
             aplicarBordes(cell);
         });
@@ -334,22 +336,13 @@ export async function exportarHorarioExcel(seccionesSeleccionadas: SeccionConMas
     // SECCIÓN 4: AJUSTE DE ANCHOS DE COLUMNA
     // ========================================================================
 
-    worksheet.getColumn(1).width = 15;  // Columna de módulos
-    worksheet.getColumn(2).width = 14;  // Lunes
-    worksheet.getColumn(3).width = 14;  // Martes
-    worksheet.getColumn(4).width = 14;  // Miércoles
-    worksheet.getColumn(5).width = 14;  // Jueves
-    worksheet.getColumn(6).width = 14;  // Viernes
-    worksheet.getColumn(7).width = 14;  // Sábado
-
-    // Ajustar anchos para tabla de detalles si hay más columnas
-    if (seccionesUnicas.size > 0) {
-        worksheet.getColumn(1).width = 15;  // Sigla
-        worksheet.getColumn(2).width = 10;  // Sección
-        worksheet.getColumn(3).width = 35;  // Nombre del Curso
-        worksheet.getColumn(4).width = 25;  // Profesor
-        worksheet.getColumn(5).width = 15;  // Tipo
-    }
+    worksheet.getColumn(1).width = 15;  // Módulos / NRC
+    worksheet.getColumn(2).width = 20;  // Lunes / Sigla
+    worksheet.getColumn(3).width = 20;  // Martes / Sección
+    worksheet.getColumn(4).width = 20;  // Miércoles / Nombre
+    worksheet.getColumn(5).width = 20;  // Jueves / Profesor
+    worksheet.getColumn(6).width = 20;  // Viernes / Tipo
+    worksheet.getColumn(7).width = 20;  // Sábado
 
     // Ajustar altura de filas del horario
     for (let i = 2; i <= MODULOS.length + 1; i++) {

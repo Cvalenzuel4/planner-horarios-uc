@@ -22,7 +22,7 @@ export interface UseCourseGeneratorReturn {
     erroresPorSigla: Record<string, string>;
 
     // Acciones
-    fetchAllCourses: (siglas: string[], semestre?: string) => Promise<void>;
+    fetchAllCourses: (siglas: string[], semestre?: string) => Promise<Ramo[]>;
     clearCourses: () => void;
 }
 
@@ -49,7 +49,7 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
 
         if (siglasLimpias.length === 0) {
             setError('Ingresa al menos una sigla válida');
-            return;
+            return [];
         }
 
         // Iniciar carga (NO borramos cursosAPI existentes)
@@ -106,8 +106,11 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
             if (nuevosRamos.length === 0 && Object.keys(erroresNuevos).length > 0) {
                 setError('No se pudieron cargar los cursos solicitados.');
             }
+
+            return nuevosRamos;
         } catch (err) {
             setError(`Error inesperado: ${err instanceof Error ? err.message : 'desconocido'}`);
+            return [];
         } finally {
             setIsLoading(false);
             setLoadingProgress(null);

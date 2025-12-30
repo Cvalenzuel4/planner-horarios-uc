@@ -74,14 +74,14 @@ export const ConflictConfigModal: React.FC<ConflictConfigModalProps> = ({
     const permisosActivos = Array.from(permisosLocal.values()).filter(v => v).length;
 
     return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="glass-panel w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg max-h-[80vh] flex flex-col">
                 {/* Header */}
-                <div className="p-4 border-b border-white/10">
-                    <h2 className="text-xl font-bold text-white mb-1">
+                <div className="p-4 border-b border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-800 mb-1">
                         ⚙️ Configurar Topes Permitidos
                     </h2>
-                    <p className="text-white/60 text-sm">
+                    <p className="text-gray-500 text-sm">
                         Marca las actividades que pueden tener topes de horario
                     </p>
                 </div>
@@ -89,7 +89,7 @@ export const ConflictConfigModal: React.FC<ConflictConfigModalProps> = ({
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {ramos.length === 0 ? (
-                        <p className="text-white/50 text-center py-8">
+                        <p className="text-gray-400 text-center py-8">
                             No hay ramos seleccionados
                         </p>
                     ) : (
@@ -98,12 +98,12 @@ export const ConflictConfigModal: React.FC<ConflictConfigModalProps> = ({
                             if (!actividades || actividades.size === 0) return null;
 
                             return (
-                                <div key={ramo.sigla} className="bg-white/5 rounded-lg p-3">
-                                    <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                                        <span className="text-sm bg-indigo-500/30 px-2 py-0.5 rounded">
+                                <div key={ramo.sigla} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                    <h3 className="text-gray-800 font-medium mb-2 flex items-center gap-2">
+                                        <span className="text-sm bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
                                             {ramo.sigla}
                                         </span>
-                                        <span className="text-white/70 text-sm truncate">
+                                        <span className="text-gray-500 text-sm truncate">
                                             {ramo.nombre}
                                         </span>
                                     </h3>
@@ -114,8 +114,8 @@ export const ConflictConfigModal: React.FC<ConflictConfigModalProps> = ({
                                                 className={`
                                                     flex items-center gap-2 p-2 rounded cursor-pointer transition-colors text-sm
                                                     ${isChecked(ramo.sigla, tipo)
-                                                        ? 'bg-emerald-500/30 text-white border border-emerald-500/50'
-                                                        : 'bg-white/5 text-white/70 hover:bg-white/10 border border-transparent'
+                                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                                                        : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                                                     }
                                                 `}
                                             >
@@ -135,11 +135,11 @@ export const ConflictConfigModal: React.FC<ConflictConfigModalProps> = ({
                     )}
 
                     {/* Info box */}
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm">
-                        <p className="text-amber-200">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                        <p className="text-amber-700">
                             <strong>ℹ️ ¿Cómo funciona?</strong>
                         </p>
-                        <p className="text-amber-200/80 mt-1">
+                        <p className="text-amber-600 mt-1">
                             Si hay tope de horario entre actividades, se permite si <strong>todas
                                 (o todas menos una)</strong> tienen este permiso activado.
                         </p>
@@ -147,10 +147,10 @@ export const ConflictConfigModal: React.FC<ConflictConfigModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-white/10 flex items-center justify-between">
-                    <div className="text-sm text-white/50">
+                <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+                    <div className="text-sm text-gray-400">
                         {permisosActivos > 0 ? (
-                            <span className="text-emerald-300">
+                            <span className="text-emerald-600">
                                 {permisosActivos} permiso{permisosActivos !== 1 ? 's' : ''} activo{permisosActivos !== 1 ? 's' : ''}
                             </span>
                         ) : (

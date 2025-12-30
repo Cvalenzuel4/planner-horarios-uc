@@ -234,6 +234,7 @@ export function convertirCursoAPIaSeccion(cursoAPI: CursoAPI): Seccion {
 
     return {
         id: `${cursoAPI.sigla}-${cursoAPI.seccion}`,
+        nrc: cursoAPI.nrc,
         numero: cursoAPI.seccion,
         actividades,
         metadatos: {

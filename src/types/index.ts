@@ -72,6 +72,7 @@ export interface Actividad {
 /** Una sección es una instancia específica de un ramo con sus actividades */
 export interface Seccion {
     id: string;           // Formato: SIGLA-NUMERO (ej: "MAT1620-1")
+    nrc?: string;         // Número de Referencia de Curso (opcional por compatibilidad)
     numero: number;
     actividades: Actividad[];
     metadatos: MetadatosSeccion;
@@ -146,15 +147,15 @@ export interface ValidationResult {
     errors: string[];
 }
 
-/** Mapeo de colores por tipo de actividad (clases TailwindCSS) */
+/** Mapeo de colores por tipo de actividad (clases TailwindCSS) - Clean UI Pastel Style */
 export const COLORES_ACTIVIDAD: Record<TipoActividad, { bg: string; text: string; border: string }> = {
-    catedra: { bg: 'bg-catedra', text: 'text-gray-900', border: 'border-amber-500' },
-    laboratorio: { bg: 'bg-laboratorio', text: 'text-gray-900', border: 'border-sky-500' },
-    ayudantia: { bg: 'bg-ayudantia', text: 'text-gray-900', border: 'border-emerald-500' },
-    taller: { bg: 'bg-taller', text: 'text-white', border: 'border-purple-600' },
-    terreno: { bg: 'bg-terreno', text: 'text-gray-900', border: 'border-amber-700' },
-    practica: { bg: 'bg-practica', text: 'text-white', border: 'border-red-600' },
-    otro: { bg: 'bg-otro', text: 'text-gray-900', border: 'border-gray-500' },
+    catedra: { bg: 'bg-amber-50', text: 'text-amber-900', border: 'border-l-4 border-l-amber-500' },
+    laboratorio: { bg: 'bg-sky-50', text: 'text-sky-900', border: 'border-l-4 border-l-sky-500' },
+    ayudantia: { bg: 'bg-emerald-50', text: 'text-emerald-900', border: 'border-l-4 border-l-emerald-500' },
+    taller: { bg: 'bg-violet-50', text: 'text-violet-900', border: 'border-l-4 border-l-violet-500' },
+    terreno: { bg: 'bg-orange-50', text: 'text-orange-900', border: 'border-l-4 border-l-orange-600' },
+    practica: { bg: 'bg-red-50', text: 'text-red-900', border: 'border-l-4 border-l-red-500' },
+    otro: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-l-4 border-l-gray-400' },
 };
 
 /** Nombres legibles de tipos de actividad */
