@@ -315,9 +315,23 @@ export const Generator: React.FC<GeneratorProps> = ({
                                 Mis Ramos ({ramos.length})
                             </label>
                             {ramos.length > 0 && (
-                                <div className="text-xs space-x-2">
-                                    <button onClick={seleccionarTodos} className="text-blue-600 hover:underline">Todos</button>
-                                    <button onClick={deseleccionarTodos} className="text-gray-400 hover:text-gray-600">Ninguno</button>
+                                <div className="text-xs flex items-center gap-3">
+                                    <div className="space-x-2 border-r border-gray-200 pr-3">
+                                        <button onClick={seleccionarTodos} className="text-blue-600 hover:underline">Todos</button>
+                                        <button onClick={deseleccionarTodos} className="text-gray-400 hover:text-gray-600">Ninguno</button>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('¿Eliminar todos los ramos?')) {
+                                                clearCourses();
+                                                onLimpiarRamos();
+                                            }
+                                        }}
+                                        className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                                        title="Eliminar todos los ramos"
+                                    >
+                                        🗑️
+                                    </button>
                                 </div>
                             )}
                         </div>
