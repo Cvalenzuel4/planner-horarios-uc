@@ -1,7 +1,6 @@
 /**
- * Generador de Horarios Automático
- * Permite buscar ramos desde la API, seleccionar secciones específicas
- * y generar combinaciones válidas de horarios
+ * Generador de Horarios Automático - Modo Interactivo
+ * Permite buscar ramos, generar combinaciones y visualizarlas interactivamente
  */
 
 import { useState, useMemo } from 'react';
@@ -10,23 +9,21 @@ import { generarHorarios, obtenerInfoCombinacion } from '../../core/scheduler';
 import { ConflictConfigModal } from './ConflictConfigModal';
 import { useCourseGenerator } from '../../hooks';
 import { SEMESTRE_ACTUAL } from '../../services/api.types';
+import { ScheduleGrid } from '../Grid';
 
 interface GeneratorProps {
     ramos: Ramo[];
     onNuevosRamos: (ramos: Ramo[]) => Promise<void>;
-    onLimpiarRamos: () => void;
-    onPreviewResultado: (secciones: SeccionConMask[]) => void;
+    onLimpiarRamos: () => void; // Used? Maybe we should expose a button for it.
     onAplicarResultado: (secciones: SeccionConMask[]) => void;
-    onClearPreview: () => void;
+    // Removed unused preview props
 }
 
 export const Generator: React.FC<GeneratorProps> = ({
     ramos: ramosLocales,
     onNuevosRamos,
     onLimpiarRamos,
-    onPreviewResultado,
     onAplicarResultado,
-    onClearPreview,
 }) => {
     // ---------- Hook para cargar cursos desde API ----------
     const {
@@ -43,33 +40,25 @@ export const Generator: React.FC<GeneratorProps> = ({
     const [siglasInput, setSiglasInput] = useState('');
     const [semestre, setSemestre] = useState(SEMESTRE_ACTUAL);
 
-    // ---------- Estados existentes ----------
+    // ---------- Estados de configuración ----------
     const [ramosSeleccionados, setRamosSeleccionados] = useState<Set<string>>(new Set());
     const [seccionesFiltradas, setSeccionesFiltradas] = useState<Map<string, Set<string>>>(new Map());
     const [ramosExpandidos, setRamosExpandidos] = useState<Set<string>>(new Set());
-
-    const [resultados, setResultados] = useState<ResultadoGeneracion[]>([]);
-    const [generando, setGenerando] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [tiempoGeneracion, setTiempoGeneracion] = useState<number>(0);
     const [permisosTope, setPermisosTope] = useState<PermisosTopeMap>(new Map());
     const [showConfigModal, setShowConfigModal] = useState(false);
 
+    // ---------- Estados de Resultados y Navegación ----------
+    const [resultados, setResultados] = useState<ResultadoGeneracion[]>([]);
+    const [activeIndex, setActiveIndex] = useState<number>(0);
+    const [generando, setGenerando] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [tiempoGeneracion, setTiempoGeneracion] = useState<number>(0);
+
     // ---------- Combinar ramos locales con los de la API ----------
     const ramos = useMemo(() => {
-        // Los cursosAPI tienen prioridad (datos más frescos)
         const ramosMap = new Map<string, Ramo>();
-
-        // Primero agregar locales
-        for (const ramo of ramosLocales) {
-            ramosMap.set(ramo.sigla, ramo);
-        }
-
-        // Sobrescribir/agregar con los de la API
-        for (const ramo of cursosAPI) {
-            ramosMap.set(ramo.sigla, ramo);
-        }
-
+        for (const ramo of ramosLocales) ramosMap.set(ramo.sigla, ramo);
+        for (const ramo of cursosAPI) ramosMap.set(ramo.sigla, ramo);
         return Array.from(ramosMap.values());
     }, [ramosLocales, cursosAPI]);
 
@@ -81,19 +70,21 @@ export const Generator: React.FC<GeneratorProps> = ({
             return;
         }
 
-        // Limpiar estado antes de cargar
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
 
         const nuevosRamos = await fetchAllCourses(siglas, semestre);
-
-        // Persistir inmediatamente los ramos encontrados
         if (nuevosRamos && nuevosRamos.length > 0) {
             await onNuevosRamos(nuevosRamos);
+            setRamosSeleccionados(prev => {
+                const newSet = new Set(prev);
+                nuevosRamos.forEach(r => newSet.add(r.sigla));
+                return newSet;
+            });
         }
     };
 
-    // ---------- Funciones existentes ----------
+    // ---------- Funciones de selección ----------
     const toggleRamo = (sigla: string) => {
         const nuevos = new Set(ramosSeleccionados);
         if (nuevos.has(sigla)) {
@@ -101,26 +92,21 @@ export const Generator: React.FC<GeneratorProps> = ({
             const nuevosFiltros = new Map(seccionesFiltradas);
             nuevosFiltros.delete(sigla);
             setSeccionesFiltradas(nuevosFiltros);
-            const nuevosExpandidos = new Set(ramosExpandidos);
-            nuevosExpandidos.delete(sigla);
-            setRamosExpandidos(nuevosExpandidos);
         } else {
             nuevos.add(sigla);
         }
         setRamosSeleccionados(nuevos);
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
     };
 
     const toggleExpandirRamo = (sigla: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        const nuevos = new Set(ramosExpandidos);
-        if (nuevos.has(sigla)) {
-            nuevos.delete(sigla);
-        } else {
-            nuevos.add(sigla);
-        }
-        setRamosExpandidos(nuevos);
+        setRamosExpandidos(prev => {
+            const nuevos = new Set(prev);
+            nuevos.has(sigla) ? nuevos.delete(sigla) : nuevos.add(sigla);
+            return nuevos;
+        });
     };
 
     const toggleSeccion = (sigla: string, seccionId: string) => {
@@ -137,7 +123,7 @@ export const Generator: React.FC<GeneratorProps> = ({
         nuevosFiltros.set(sigla, nuevasSecciones);
         setSeccionesFiltradas(nuevosFiltros);
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
     };
 
     const seleccionarTodasSecciones = (ramo: Ramo) => {
@@ -150,62 +136,38 @@ export const Generator: React.FC<GeneratorProps> = ({
         }
         setSeccionesFiltradas(nuevosFiltros);
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
     };
 
     const getSeccionesSeleccionadasCount = (ramo: Ramo): string => {
         const filtro = seccionesFiltradas.get(ramo.sigla);
-        if (!filtro || filtro.size === 0) {
-            return `Todas (${ramo.secciones.length})`;
-        }
+        if (!filtro || filtro.size === 0) return `Todas (${ramo.secciones.length})`;
         return `${filtro.size} de ${ramo.secciones.length}`;
     };
 
     const isSeccionSeleccionada = (sigla: string, seccionId: string): boolean => {
         const filtro = seccionesFiltradas.get(sigla);
-        if (!filtro || filtro.size === 0) {
-            return true;
-        }
+        if (!filtro || filtro.size === 0) return true;
         return filtro.has(seccionId);
     };
 
     const seleccionarTodos = () => {
         setRamosSeleccionados(new Set(ramos.map(r => r.sigla)));
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
     };
 
     const deseleccionarTodos = () => {
         setRamosSeleccionados(new Set());
         setSeccionesFiltradas(new Map());
-        setRamosExpandidos(new Set());
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
     };
 
+    // ---------- Generación ----------
     const ramosParaGenerar = useMemo(() => {
         return ramos.filter(r => ramosSeleccionados.has(r.sigla));
     }, [ramos, ramosSeleccionados]);
-
-    const estadisticas = useMemo(() => {
-        if (ramosParaGenerar.length === 0) return null;
-
-        let seccionesTotalCount = 0;
-        let combinacionesPosibles = 1;
-
-        for (const ramo of ramosParaGenerar) {
-            const filtro = seccionesFiltradas.get(ramo.sigla);
-            const count = (filtro && filtro.size > 0) ? filtro.size : ramo.secciones.length;
-            seccionesTotalCount += count;
-            combinacionesPosibles *= count;
-        }
-
-        return {
-            combinacionesPosibles,
-            ramosCount: ramosParaGenerar.length,
-            seccionesTotalCount,
-        };
-    }, [ramosParaGenerar, seccionesFiltradas]);
 
     const handleGenerar = async () => {
         if (ramosParaGenerar.length === 0) {
@@ -216,9 +178,10 @@ export const Generator: React.FC<GeneratorProps> = ({
         setGenerando(true);
         setError(null);
         setResultados([]);
-        onClearPreview();
+        setActiveIndex(0);
+        setTiempoGeneracion(0); // Reset unused var or keep for debug? I'll use it in console or UI.
 
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const inicio = performance.now();
 
@@ -231,6 +194,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                 setError('No se encontraron combinaciones válidas (todos los horarios tienen conflictos)');
             } else {
                 setResultados(results);
+                setActiveIndex(0);
             }
         } catch (err) {
             setError(`Error durante la generación: ${(err as Error).message}`);
@@ -239,395 +203,330 @@ export const Generator: React.FC<GeneratorProps> = ({
         }
     };
 
+    const handleNext = () => {
+        if (resultados.length === 0) return;
+        setActiveIndex(prev => Math.min(prev + 1, resultados.length - 1));
+    };
+
+    const handlePrev = () => {
+        if (resultados.length === 0) return;
+        setActiveIndex(prev => Math.max(prev - 1, 0));
+    };
+
+    const handleApplyToPlanner = async () => {
+        if (resultados.length === 0) return;
+        const seleccion = resultados[activeIndex].secciones;
+
+        if (cursosAPI.length > 0) {
+            await onNuevosRamos(cursosAPI);
+        }
+
+        onAplicarResultado(seleccion);
+    };
+
+    // ---------- Render ----------
     return (
-        <div className="flex flex-col h-full">
-            {/* Cabecera */}
-            <div className="p-4 border-b border-gray-100 bg-white">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    🔄 Generador de Horarios
-                </h2>
-                <p className="text-gray-500 text-sm">
-                    Busca ramos, selecciona secciones y genera combinaciones sin conflictos
-                </p>
-            </div>
+        <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-white">
 
-            {/* ========== NUEVA SECCIÓN: Buscar desde API ========== */}
-            <div className="p-4 border-b border-gray-100 bg-gray-50">
-                <h3 className="text-gray-700 font-medium mb-3 flex items-center gap-2">
-                    🔍 Buscar Ramos desde API
-                </h3>
+            {/* ================= SIDEBAR ================= */}
+            <div className="w-full lg:w-[400px] flex-shrink-0 flex flex-col border-r border-gray-200 bg-white h-full overflow-hidden z-10 shadow-sm relative">
 
-                {/* Row 1: Input */}
-                <input
-                    type="text"
-                    value={siglasInput}
-                    onChange={(e) => setSiglasInput(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCargarDesdeAPI()}
-                    placeholder="Ej: ICS2123, MAT1610, FIS1514"
-                    className="input-styled w-full mb-2"
-                    disabled={loadingAPI}
-                />
-
-                {/* Row 2: Semester + Button */}
-                <div className="flex gap-2">
-                    <select
-                        value={semestre}
-                        onChange={(e) => setSemestre(e.target.value)}
-                        className="select-styled w-28"
-                        disabled={loadingAPI}
-                    >
-                        <option value="2026-1">2026-1</option>
-                        <option value="2025-2">2025-2</option>
-                        <option value="2025-1">2025-1</option>
-                    </select>
-
-                    <button
-                        onClick={handleCargarDesdeAPI}
-                        disabled={loadingAPI || !siglasInput.trim()}
-                        className={`btn-primary flex-1 whitespace-nowrap ${loadingAPI ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                        {loadingAPI ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="loader w-4 h-4" />
-                                Cargando...
-                            </span>
-                        ) : (
-                            '🚀 Cargar Ramos'
-                        )}
-                    </button>
-                </div>
-
-                {/* Progreso de carga */}
-                {loadingProgress && (
-                    <div className="mt-2 p-2 bg-blue-50 rounded-lg text-sm text-blue-700 flex items-center gap-2 border border-blue-100">
-                        <span className="loader w-3 h-3" />
-                        Buscando {loadingProgress.currentSigla}... ({loadingProgress.current}/{loadingProgress.total})
-                    </div>
-                )}
-
-                {/* Errores por sigla */}
-                {Object.keys(erroresPorSigla).length > 0 && (
-                    <div className="mt-2 p-2 bg-amber-50 rounded-lg text-sm text-amber-700 border border-amber-200">
-                        <span className="font-medium">⚠️ Algunas siglas no se encontraron:</span>
-                        <ul className="ml-4 mt-1 text-xs">
-                            {Object.entries(erroresPorSigla).map(([sigla, msg]) => (
-                                <li key={sigla}>• {sigla}: {msg}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Cursos cargados desde API */}
-                {cursosAPI.length > 0 && (
-                    <div className="mt-2 flex items-center justify-between text-sm">
-                        <span className="text-emerald-600">
-                            ✅ {cursosAPI.length} ramo{cursosAPI.length !== 1 ? 's' : ''} cargado{cursosAPI.length !== 1 ? 's' : ''} desde la API
-                        </span>
-                        <button
-                            onClick={clearCourses}
-                            className="text-xs text-gray-500 hover:text-gray-700"
-                        >
-                            Limpiar
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* Selector de ramos */}
-            <div className="p-4 border-b border-gray-100">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-gray-700 font-medium">Ramos a incluir:</h3>
-                    <div className="flex gap-2 items-center">
-                        {/* Botón limpiar - solo visible si hay ramos */}
-                        {ramos.length > 0 && (
-                            <button
-                                onClick={() => {
-                                    if (confirm('¿Estás seguro de que deseas eliminar TODOS los ramos cargados?')) {
-                                        clearCourses();
-                                        onLimpiarRamos();
-                                        deseleccionarTodos();
-                                    }
-                                }}
-                                className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
-                                title="Eliminar todos los ramos cargados"
-                            >
-                                🗑️ Limpiar
-                            </button>
-                        )}
-                        {ramos.length > 0 && <span className="text-gray-300">|</span>}
-                        <button
-                            onClick={seleccionarTodos}
-                            className="text-xs text-orange-600 hover:text-orange-700"
-                        >
-                            Todos
-                        </button>
-                        <span className="text-gray-300">|</span>
-                        <button
-                            onClick={deseleccionarTodos}
-                            className="text-xs text-orange-600 hover:text-orange-700"
-                        >
-                            Ninguno
-                        </button>
-                    </div>
-                </div>
-
-                {ramos.length === 0 ? (
-                    <p className="text-gray-400 text-center py-4">
-                        No hay ramos disponibles. Busca ramos desde la API o agrega ramos en el Planificador.
+                <div className="p-4 border-b border-gray-100 flex-shrink-0 bg-white">
+                    <h2 className="text-xl font-bold text-gray-800 mb-1">
+                        Generador
+                    </h2>
+                    <p className="text-gray-500 text-xs">
+                        {resultados.length > 0
+                            ? `Se encontraron ${resultados.length} combinaciones`
+                            : 'Configura y genera tus opciones.'}
+                        {tiempoGeneracion > 0 && ` (${tiempoGeneracion.toFixed(0)}ms)`}
                     </p>
-                ) : (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {ramos.map((ramo) => {
-                            const isSelected = ramosSeleccionados.has(ramo.sigla);
-                            const isExpanded = ramosExpandidos.has(ramo.sigla);
-                            const isFromAPI = cursosAPI.some(c => c.sigla === ramo.sigla);
+                </div>
 
-                            return (
-                                <div key={ramo.sigla} className="space-y-1">
-                                    {/* Ramo principal */}
-                                    <div
-                                        className={`
-                                            flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors
-                                            ${isSelected
-                                                ? 'bg-orange-50 border border-orange-300'
-                                                : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
-                                            }
-                                        `}
-                                        onClick={() => toggleRamo(ramo.sigla)}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            onChange={() => { }}
-                                            className="checkbox-styled"
-                                        />
-                                        <div className="flex-1 min-w-0">
-                                            <span className="text-sm font-medium text-gray-800 block truncate">
-                                                {ramo.sigla}
-                                                {isFromAPI && (
-                                                    <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
-                                                        API
-                                                    </span>
-                                                )}
-                                            </span>
-                                            <span className="text-xs text-gray-500 block truncate">
-                                                {ramo.nombre} • {getSeccionesSeleccionadasCount(ramo)}
-                                            </span>
-                                        </div>
-                                        {/* Botón expandir secciones */}
-                                        {isSelected && ramo.secciones.length > 0 && (
-                                            <button
-                                                onClick={(e) => toggleExpandirRamo(ramo.sigla, e)}
-                                                className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
-                                                title="Filtrar secciones"
-                                            >
-                                                <svg
-                                                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                        )}
-                                    </div>
+                <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50/30">
 
-                                    {/* Secciones del ramo (expandible) */}
-                                    {isSelected && isExpanded && (
-                                        <div className="ml-6 p-2 bg-gray-50 rounded-lg space-y-1 border border-gray-100">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-xs text-gray-500 font-medium">Secciones:</span>
-                                                <button
-                                                    onClick={() => seleccionarTodasSecciones(ramo)}
-                                                    className="text-xs text-orange-600 hover:text-orange-700"
-                                                >
-                                                    {(seccionesFiltradas.get(ramo.sigla)?.size === ramo.secciones.length)
-                                                        ? 'Cualquiera'
-                                                        : 'Seleccionar todas'}
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-1">
-                                                {ramo.secciones.map((seccion) => {
-                                                    const isSeccionActiva = isSeccionSeleccionada(ramo.sigla, seccion.id);
-                                                    const filtro = seccionesFiltradas.get(ramo.sigla);
-                                                    const hayFiltroActivo = filtro && filtro.size > 0;
+                    {/* Buscador API */}
+                    <div className="p-4 border-b border-gray-100 bg-white">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                            Buscar Ramos desde API
+                        </label>
+                        <div className="flex flex-col gap-2 mb-2">
+                            <input
+                                type="text"
+                                value={siglasInput}
+                                onChange={(e) => setSiglasInput(e.target.value.toUpperCase())}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCargarDesdeAPI()}
+                                placeholder="Ej: MAT1610, ICS1513"
+                                className="input-styled w-full text-sm py-1.5"
+                                disabled={loadingAPI}
+                            />
+                            <div className="flex gap-2">
+                                <select
+                                    value={semestre}
+                                    onChange={(e) => setSemestre(e.target.value)}
+                                    className="select-styled text-sm py-1.5 w-32"
+                                    disabled={loadingAPI}
+                                >
+                                    <option value="2026-1">2026-1</option>
+                                    <option value="2025-2">2025-2</option>
+                                    <option value="2025-1">2025-1</option>
+                                </select>
+                                <button
+                                    onClick={handleCargarDesdeAPI}
+                                    disabled={loadingAPI || !siglasInput.trim()}
+                                    className="btn-primary px-3 py-1.5 text-sm flex-1 flex justify-center gap-2"
+                                >
+                                    {loadingAPI ? <span className="loader w-4 h-4" /> : '🔍 Buscar'}
+                                </button>
+                            </div>
+                        </div>
 
-                                                    return (
-                                                        <label
-                                                            key={seccion.id}
-                                                            className={`
-                                                                flex items-center gap-2 p-1.5 rounded cursor-pointer transition-colors text-xs
-                                                                ${hayFiltroActivo && isSeccionActiva
-                                                                    ? 'bg-orange-100 text-gray-800'
-                                                                    : hayFiltroActivo && !isSeccionActiva
-                                                                        ? 'bg-gray-100 text-gray-400'
-                                                                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                                                                }
-                                                            `}
-                                                            onClick={(e) => e.stopPropagation()}
+                        {loadingProgress && (
+                            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-2 border border-blue-100 flex items-center gap-2">
+                                <span className="loader w-3 h-3 border-blue-600" />
+                                Buscando {loadingProgress.currentSigla}...
+                            </div>
+                        )}
+
+                        {Object.keys(erroresPorSigla).length > 0 && (
+                            <div className="mt-2 p-2 bg-amber-50 rounded text-xs text-amber-700 border border-amber-100">
+                                {Object.entries(erroresPorSigla).map(([sigla, msg]) => (
+                                    <div key={sigla}>• <b>{sigla}:</b> {msg}</div>
+                                ))}
+                            </div>
+                        )}
+
+                        {cursosAPI.length > 0 && (
+                            <div className="flex justify-between items-center mt-2">
+                                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                                    ✅ {cursosAPI.length} ramos cargados
+                                </span>
+                                <button onClick={() => { clearCourses(); onLimpiarRamos(); }} className="text-xs text-gray-400 hover:text-red-500 underline decoration-dotted">
+                                    Limpiar API
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Lista Ramos */}
+                    <div className="p-4">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Mis Ramos ({ramos.length})
+                            </label>
+                            {ramos.length > 0 && (
+                                <div className="text-xs space-x-2">
+                                    <button onClick={seleccionarTodos} className="text-blue-600 hover:underline">Todos</button>
+                                    <button onClick={deseleccionarTodos} className="text-gray-400 hover:text-gray-600">Ninguno</button>
+                                </div>
+                            )}
+                        </div>
+
+                        {ramos.length === 0 ? (
+                            <div className="text-center py-8 text-gray-400 text-sm italic border-2 border-dashed border-gray-100 rounded-xl">
+                                No hay ramos disponibles.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {ramos.map((ramo) => (
+                                    <div key={ramo.sigla} className="border border-gray-100 rounded-lg bg-white shadow-sm overflow-hidden">
+                                        <div
+                                            className={`p-2.5 flex items-center gap-3 cursor-pointer transition-colors ${ramosSeleccionados.has(ramo.sigla) ? 'bg-blue-50/60' : 'hover:bg-gray-50'}`}
+                                            onClick={() => toggleRamo(ramo.sigla)}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={ramosSeleccionados.has(ramo.sigla)}
+                                                onChange={() => { }}
+                                                className="checkbox-styled"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-semibold text-gray-700 text-sm truncate">{ramo.sigla}</span>
+                                                    {ramosSeleccionados.has(ramo.sigla) && ramo.secciones.length > 0 && (
+                                                        <button
+                                                            onClick={(e) => toggleExpandirRamo(ramo.sigla, e)}
+                                                            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-black/5"
                                                         >
+                                                            <svg className={`w-4 h-4 transition-transform ${ramosExpandidos.has(ramo.sigla) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs mt-0.5">
+                                                    <span className="text-gray-500 truncate max-w-[150px]">{ramo.nombre}</span>
+                                                    <span className="text-gray-400 text-[10px]">{getSeccionesSeleccionadasCount(ramo)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Secciones expandibles */}
+                                        {ramosSeleccionados.has(ramo.sigla) && ramosExpandidos.has(ramo.sigla) && (
+                                            <div className="bg-gray-50 p-2 border-t border-gray-100 space-y-1">
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="text-[10px] text-gray-400 font-bold uppercase">Secciones</span>
+                                                    <button onClick={() => seleccionarTodasSecciones(ramo)} className="text-[10px] text-blue-500 hover:text-blue-700">
+                                                        Todas/Ninguna
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-1">
+                                                    {ramo.secciones.map(sec => (
+                                                        <label key={sec.id} className="flex items-center gap-2 cursor-pointer p-1.5 rounded hover:bg-white text-xs border border-transparent hover:border-gray-100 transition-colors">
                                                             <input
                                                                 type="checkbox"
-                                                                checked={hayFiltroActivo ? isSeccionActiva : false}
-                                                                onChange={() => toggleSeccion(ramo.sigla, seccion.id)}
-                                                                className="checkbox-styled w-3 h-3"
+                                                                checked={isSeccionSeleccionada(ramo.sigla, sec.id)}
+                                                                onChange={() => toggleSeccion(ramo.sigla, sec.id)}
+                                                                className="checkbox-styled w-3.5 h-3.5 flex-shrink-0"
                                                             />
-                                                            <span className="truncate">
-                                                                Sec {seccion.numero}
-                                                                {seccion.metadatos?.profesor && (
-                                                                    <span className="text-gray-400 ml-1">
-                                                                        ({seccion.metadatos.profesor})
-                                                                    </span>
-                                                                )}
+                                                            <span className={`truncate ${!isSeccionSeleccionada(ramo.sigla, sec.id) ? 'text-gray-400' : 'text-gray-700'}`}>
+                                                                Sec {sec.numero} {sec.metadatos?.profesor && <span className="text-gray-500 ml-1">({sec.metadatos.profesor})</span>}
                                                             </span>
                                                         </label>
-                                                    );
-                                                })}
+                                                    ))}
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-gray-400 mt-2 italic">
-                                                Sin selección = cualquier sección válida
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-
-                {/* Estadísticas */}
-                {estadisticas && (
-                    <div className="mt-3 p-2 bg-gray-50 rounded-lg text-sm text-gray-600 border border-gray-100">
-                        <span className="font-medium">{estadisticas.ramosCount}</span> ramos,{' '}
-                        <span className="font-medium">{estadisticas.seccionesTotalCount}</span> secciones,{' '}
-                        <span className="font-medium">{estadisticas.combinacionesPosibles.toLocaleString()}</span> combinaciones posibles
-                    </div>
-                )}
-
-                {/* Botón configurar topes */}
-                <button
-                    onClick={() => setShowConfigModal(true)}
-                    disabled={ramosSeleccionados.size === 0}
-                    className={`
-                        w-full mt-4 py-2 rounded-lg font-medium transition-all text-sm
-                        ${ramosSeleccionados.size === 0
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-700 border border-gray-200'
-                        }
-                    `}
-                >
-                    ⚙️ Configurar Topes Permitidos
-                    {permisosTope.size > 0 && (
-                        <span className="ml-2 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">
-                            {permisosTope.size} activo{permisosTope.size !== 1 ? 's' : ''}
-                        </span>
-                    )}
-                </button>
-
-                {/* Botón generar */}
-                <button
-                    onClick={handleGenerar}
-                    disabled={generando || ramosSeleccionados.size === 0}
-                    className={`
-            w-full mt-4 py-3 rounded-lg font-bold transition-all
-            ${generando || ramosSeleccionados.size === 0
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'btn-primary'
-                        }
-          `}
-                >
-                    {generando ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <span className="loader w-5 h-5" />
-                            Generando...
-                        </span>
-                    ) : (
-                        '🚀 Generar Horarios'
-                    )}
-                </button>
-            </div>
-
-            {/* Error */}
-            {(error || errorAPI) && (
-                <div className="m-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-                    {error || errorAPI}
-                </div>
-            )}
-
-            {/* Resultados */}
-            <div className="p-4">
-                {resultados.length > 0 && (
-                    <>
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-gray-700 font-medium">
-                                Resultados: {resultados.length} combinaciones
-                            </h3>
-                            <span className="text-xs text-gray-500">
-                                Generado en {tiempoGeneracion.toFixed(0)}ms
-                            </span>
-                        </div>
-
-                        {/* Max height para ~3 tarjetas (~130px each + spacing), scroll solo si hay 4+ resultados */}
-                        <div className={`space-y-2 pr-1 ${resultados.length > 3 ? 'max-h-[420px] overflow-y-auto' : ''}`}>
-                            {resultados.map((resultado, index) => {
-                                const info = obtenerInfoCombinacion(resultado);
-
-                                return (
-                                    <div
-                                        key={resultado.id}
-                                        className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-colors cursor-pointer group"
-                                        onMouseEnter={() => onPreviewResultado(resultado.secciones)}
-                                        onMouseLeave={() => onClearPreview()}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <span className="text-gray-800 font-medium">
-                                                    Opción {index + 1}
-                                                    {resultado.tieneConflictosPermitidos && (
-                                                        <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                                                            ⚠️ Con tope
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {info.descripcion}
-                                                </p>
-                                                <p className="text-xs text-gray-400 mt-1">
-                                                    {info.bloquesOcupados} bloques ocupados
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    // Persistir ramos de la API antes de aplicar
-                                                    if (cursosAPI.length > 0) {
-                                                        await onNuevosRamos(cursosAPI);
-                                                    }
-                                                    onAplicarResultado(resultado.secciones);
-                                                }}
-                                                className="btn-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                Aplicar
-                                            </button>
-                                        </div>
+                                        )}
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </>
-                )}
+                                ))}
+                            </div>
+                        )}
 
-                {!generando && resultados.length === 0 && !error && !errorAPI && (
-                    <div className="text-center py-8 text-gray-400">
-                        <p className="text-4xl mb-2">📊</p>
-                        <p>Selecciona ramos y haz clic en "Generar"</p>
-                        <p className="text-sm mt-1">Los resultados aparecerán aquí</p>
+                        {/* LISTA RESULTADOS SIDEBAR */}
+                        {resultados.length > 0 && (
+                            <div className="mt-8 border-t border-gray-200 pt-4">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                                    Navegación Rápida
+                                </label>
+                                <div className="space-y-1.5">
+                                    {resultados.map((res, idx) => {
+                                        const isActive = idx === activeIndex;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`p-2 rounded-lg border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
+                                                onClick={() => setActiveIndex(idx)}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {idx + 1}
+                                                    </span>
+                                                    {res.tieneConflictosPermitidos && (
+                                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1 rounded" title="Conflicto permitido">⚠️</span>
+                                                    )}
+                                                    <span className="text-[10px] text-gray-400">{obtenerInfoCombinacion(res).bloquesOcupados} blq</span>
+                                                </div>
+                                                <button
+                                                    className={`text-[10px] uppercase font-bold tracking-wide ${isActive ? 'text-blue-600' : 'text-gray-300'}`}
+                                                >
+                                                    {isActive ? 'Viendo' : 'Ver'}
+                                                </button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                     </div>
-                )}
+                </div>
+
+                {/* Footer Sidebar */}
+                <div className="p-4 border-t border-gray-100 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                    <button
+                        onClick={() => setShowConfigModal(true)}
+                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-3 w-full justify-center transition-colors hover:bg-gray-50 py-1 rounded"
+                    >
+                        ⚙️ Topes permitidos {permisosTope.size > 0 && `(${permisosTope.size})`}
+                    </button>
+                    <button
+                        onClick={handleGenerar}
+                        disabled={generando || ramosSeleccionados.size === 0}
+                        className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-[0.98] ${generando ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'}`}
+                    >
+                        {generando ? 'Generando...' : '⚡ Generar Combinaciones'}
+                    </button>
+                    {(error || errorAPI) && (
+                        <div className="mt-2 text-xs text-red-500 text-center font-medium animate-pulse bg-red-50 p-1 rounded border border-red-100">
+                            {error || errorAPI}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Modal de configuración de topes */}
+            {/* ================= MAIN CONTENT ================= */}
+            <div className="flex-1 flex flex-col h-full bg-slate-50 min-w-0">
+                <div className="flex-1 overflow-hidden relative flex flex-col">
+                    {resultados.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-300 p-8 select-none">
+                            <div className="text-8xl mb-4 grayscale opacity-20">📅</div>
+                            <h3 className="text-xl font-medium text-gray-400">Generador de Horarios</h3>
+                            <p className="text-sm mt-2 max-w-sm text-center text-gray-400">
+                                Busca ramos en la API, selecciona tus preferencias en el panel izquierdo y presiona "Generar".
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Info Bar */}
+                            <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-10 flex-shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-bold text-gray-800 leading-none">Opción {activeIndex + 1}</span>
+                                        <span className="text-xs text-gray-400 font-mono mt-0.5">ID: {resultados[activeIndex].id.substring(0, 8)}</span>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                                    ⏱️ {obtenerInfoCombinacion(resultados[activeIndex]).bloquesOcupados} bloques
+                                </div>
+                            </div>
+
+                            {/* GRID */}
+                            <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-slate-50/50">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 min-w-[800px] mx-auto max-w-6xl h-full flex flex-col">
+                                    <ScheduleGrid
+                                        seccionesSeleccionadas={resultados[activeIndex].secciones}
+                                        previewSecciones={[]}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* NAVIGATION BAR */}
+                            <div className="bg-white border-t border-gray-200 p-4 flex flex-col md:flex-row justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 gap-4 flex-shrink-0">
+                                <div className="flex items-center gap-2 bg-gray-100/50 p-1.5 rounded-xl border border-gray-200">
+                                    <button
+                                        onClick={handlePrev}
+                                        disabled={activeIndex === 0}
+                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none bg-transparent hover:shadow min-w-[40px]"
+                                    >
+                                        ◀
+                                    </button>
+                                    <div className="flex flex-col items-center w-24 px-2 select-none">
+                                        <span className="font-bold text-gray-800 text-lg leading-none">{activeIndex + 1}</span>
+                                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">de {resultados.length}</span>
+                                    </div>
+                                    <button
+                                        onClick={handleNext}
+                                        disabled={activeIndex === resultados.length - 1}
+                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none bg-transparent hover:shadow min-w-[40px]"
+                                    >
+                                        ▶
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={handleApplyToPlanner}
+                                    className="bg-[#003366] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#002244] transition-all shadow-lg hover:shadow-xl active:transform active:scale-[0.98] flex items-center gap-3 group"
+                                >
+                                    <span>Llevar al Planificador</span>
+                                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Modal */}
             {showConfigModal && (
                 <ConflictConfigModal
                     ramos={ramosParaGenerar}

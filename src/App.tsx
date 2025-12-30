@@ -193,14 +193,6 @@ function App() {
     }, []);
 
     // Generador handlers
-    const handlePreviewResultado = useCallback((secciones: SeccionConMask[]) => {
-        setPreviewSecciones(secciones);
-    }, []);
-
-    const handleClearPreview = useCallback(() => {
-        setPreviewSecciones([]);
-    }, []);
-
     const handleAplicarResultado = useCallback((secciones: SeccionConMask[]) => {
         setSeccionesSeleccionadasIds(new Set(secciones.map(s => s.id)));
         setPreviewSecciones([]);
@@ -342,118 +334,103 @@ function App() {
             </div>
 
             {/* Main content */}
-            <main className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden relative">
-                {tab === 'planner' ? (
-                    <>
-                        {/* Overlay para cerrar sidebar en móvil */}
-                        {sidebarOpen && (
-                            <div
-                                className="lg:hidden fixed inset-0 bg-black/50 z-30"
-                                onClick={() => setSidebarOpen(false)}
-                            />
-                        )}
-
-                        {/* Sidebar - Buscador de Cursos */}
+            {/* Main content */}
+            <main className="flex-1 min-h-0 relative overflow-hidden">
+                {/* PLANNER TAB */}
+                <div className={`flex flex-col lg:flex-row h-full w-full ${tab === 'planner' ? 'flex' : 'hidden'}`}>
+                    {/* Overlay para cerrar sidebar en móvil */}
+                    {sidebarOpen && (
                         <div
-                            className={`
-                                fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto
-                                transform transition-transform duration-300 ease-in-out
-                                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                                flex-shrink-0 lg:h-full max-h-[100vh] lg:max-h-full
-                                w-full max-w-sm lg:max-w-none lg:w-[470px]
-                            `}
-                            style={gridHeight ? { height: `${gridHeight}px` } : undefined}
-                        >
-                            <CourseSearch
-                                seccionesSeleccionadasIds={seccionesSeleccionadasIds}
-                                onToggleSeccion={handleToggleSeccion}
-                                onNuevosRamos={handleNuevosRamos}
+                            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                            onClick={() => setSidebarOpen(false)}
+                        />
+                    )}
+
+                    {/* Sidebar - Buscador de Cursos */}
+                    <div
+                        className={`
+                            fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto
+                            transform transition-transform duration-300 ease-in-out
+                            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                            flex-shrink-0 lg:h-full max-h-[100vh] lg:max-h-full
+                            w-full max-w-sm lg:max-w-none lg:w-[470px]
+                        `}
+                        style={gridHeight ? { height: `${gridHeight}px` } : undefined}
+                    >
+                        <CourseSearch
+                            seccionesSeleccionadasIds={seccionesSeleccionadasIds}
+                            onToggleSeccion={handleToggleSeccion}
+                            onNuevosRamos={handleNuevosRamos}
+                        />
+                    </div>
+
+                    {/* Grid */}
+                    <div className="flex-1 p-3 md:p-6 lg:pl-3.5 overflow-auto">
+                        <div ref={gridContainerRef} className="glass-panel p-3 md:p-6">
+                            <ScheduleGrid
+                                seccionesSeleccionadas={seccionesSeleccionadas}
+                                previewSecciones={previewSecciones}
                             />
                         </div>
 
-                        {/* Grid */}
-                        <div className="flex-1 p-3 md:p-6 lg:pl-3.5 overflow-auto">
-                            <div ref={gridContainerRef} className="glass-panel p-3 md:p-6">
-                                <ScheduleGrid
-                                    seccionesSeleccionadas={seccionesSeleccionadas}
-                                    previewSecciones={previewSecciones}
-                                />
-                            </div>
+                        {/* Leyenda - más compacta en móvil */}
+                        <div className="mt-3 md:mt-4 flex items-center gap-2 md:gap-4 justify-center flex-wrap">
+                            <span className="text-gray-500 text-xs md:text-sm">Leyenda:</span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-amber-400" />
+                                <span className="text-gray-600">Cátedra</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-sky-400" />
+                                <span className="text-gray-600">Lab</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-emerald-400" />
+                                <span className="text-gray-600">Ayud</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-violet-400" />
+                                <span className="text-gray-600">Taller</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-orange-500" />
+                                <span className="text-gray-600">Terreno</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-400" />
+                                <span className="text-gray-600">Práctica</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs md:text-sm">
+                                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-500 animate-pulse" />
+                                <span className="text-gray-600">Conflicto</span>
+                            </span>
 
-                            {/* Leyenda - más compacta en móvil */}
-                            <div className="mt-3 md:mt-4 flex items-center gap-2 md:gap-4 justify-center flex-wrap">
-                                <span className="text-gray-500 text-xs md:text-sm">Leyenda:</span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-amber-400" />
-                                    <span className="text-gray-600">Cátedra</span>
-                                </span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-sky-400" />
-                                    <span className="text-gray-600">Lab</span>
-                                </span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-emerald-400" />
-                                    <span className="text-gray-600">Ayud</span>
-                                </span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-violet-400" />
-                                    <span className="text-gray-600">Taller</span>
-                                </span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-orange-500" />
-                                    <span className="text-gray-600">Terreno</span>
-                                </span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-400" />
-                                    <span className="text-gray-600">Práctica</span>
-                                </span>
-                                <span className="flex items-center gap-1 text-xs md:text-sm">
-                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-500 animate-pulse" />
-                                    <span className="text-gray-600">Conflicto</span>
-                                </span>
-
-                                {/* Botón limpiar - solo visible si hay secciones seleccionadas */}
-                                {seccionesSeleccionadas.length > 0 && (
-                                    <button
-                                        onClick={handleLimpiarHorario}
-                                        className="ml-2 md:ml-4 px-3 py-1 text-xs md:text-sm bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-all flex items-center gap-1"
-                                    >
-                                        <span>🗑️</span>
-                                        <span className="hidden sm:inline">Limpiar horario</span>
-                                        <span className="sm:hidden">Limpiar</span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto">
-                        {/* Generator panel - altura dinámica que crece verticalmente más allá del grid */}
-                        <div className="w-full lg:w-[460px] glass-panel-dark flex-shrink-0 lg:self-start">
-                            <Generator
-                                ramos={ramos}
-                                onNuevosRamos={handleNuevosRamos}
-                                onLimpiarRamos={handleLimpiarRamos}
-                                onPreviewResultado={handlePreviewResultado}
-                                onAplicarResultado={handleAplicarResultado}
-                                onClearPreview={handleClearPreview}
-                            />
-                        </div>
-
-                        {/* Grid con preview */}
-                        <div className="flex-1 p-3 md:p-6 overflow-auto">
-                            <div className="glass-panel p-3 md:p-6">
-                                <ScheduleGrid
-                                    seccionesSeleccionadas={[]}
-                                    previewSecciones={previewSecciones}
-                                />
-                            </div>
+                            {/* Botón limpiar - solo visible si hay secciones seleccionadas */}
+                            {seccionesSeleccionadas.length > 0 && (
+                                <button
+                                    onClick={handleLimpiarHorario}
+                                    className="ml-2 md:ml-4 px-3 py-1 text-xs md:text-sm bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-all flex items-center gap-1"
+                                >
+                                    <span>🗑️</span>
+                                    <span className="hidden sm:inline">Limpiar horario</span>
+                                    <span className="sm:hidden">Limpiar</span>
+                                </button>
+                            )}
                         </div>
                     </div>
-                )
-                }
-            </main >
-        </div >
+                </div>
+
+                {/* GENERATOR TAB */}
+                <div className={`w-full h-full ${tab === 'generator' ? 'block' : 'hidden'}`}>
+                    <Generator
+                        ramos={ramos}
+                        onNuevosRamos={handleNuevosRamos}
+                        onLimpiarRamos={handleLimpiarRamos}
+                        onAplicarResultado={handleAplicarResultado}
+                    />
+                </div>
+            </main>
+        </div>
     );
 }
 
