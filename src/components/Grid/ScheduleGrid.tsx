@@ -18,6 +18,7 @@ import {
     NOMBRES_ACTIVIDAD,
 } from '../../types';
 import { ConflictDetailModal } from './ConflictDetailModal';
+import { SectionInfoModal } from './SectionInfoModal';
 
 
 interface BloqueRenderizado {
@@ -51,6 +52,17 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         bloques: [],
     });
 
+    // Estado para el modal de información de sección
+    const [sectionInfoModal, setSectionInfoModal] = useState<{
+        isOpen: boolean;
+        seccion: SeccionConMask | null;
+        tipoActividad: TipoActividad;
+    }>({
+        isOpen: false,
+        seccion: null,
+        tipoActividad: 'catedra',
+    });
+
     const handleConflictClick = (dia: Dia, modulo: Modulo, bloques: BloqueRenderizado[]) => {
         setConflictModal({
             isOpen: true,
@@ -62,6 +74,19 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
     const closeConflictModal = () => {
         setConflictModal(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // Handler para mostrar info de sección al hacer click
+    const handleSectionClick = (seccion: SeccionConMask, tipo: TipoActividad) => {
+        setSectionInfoModal({
+            isOpen: true,
+            seccion,
+            tipoActividad: tipo,
+        });
+    };
+
+    const closeSectionInfoModal = () => {
+        setSectionInfoModal(prev => ({ ...prev, isOpen: false }));
     };
     // Combinar secciones seleccionadas con preview
     const todasLasSecciones = [...seccionesSeleccionadas, ...previewSecciones];
@@ -129,11 +154,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         return (
             <div
                 className={`grid-cell ${isPreview ? 'opacity-60' : ''} cursor-pointer`}
-                onClick={() => onBloqueClick?.(dia, modulo, [seccion])}
+                onClick={() => handleSectionClick(seccion, tipo)}
             >
                 <div
                     className={`schedule-block ${colores.bg} ${colores.text} ${colores.border} border-2`}
-                    title={`${seccion.ramoNombre} - Sección ${seccion.numero}\n${NOMBRES_ACTIVIDAD[tipo]}`}
+                    title={`${seccion.ramoNombre} - Sección ${seccion.numero}\n${NOMBRES_ACTIVIDAD[tipo]}\nClick para más info`}
                 >
                     <span className="font-bold truncate max-w-full px-1">{seccion.ramoSigla}</span>
                     <span className="text-[10px] opacity-80">S{seccion.numero}</span>
@@ -220,6 +245,14 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                 dia={conflictModal.dia}
                 modulo={conflictModal.modulo}
                 bloquesEnConflicto={conflictModal.bloques}
+            />
+
+            {/* Modal de información de sección */}
+            <SectionInfoModal
+                isOpen={sectionInfoModal.isOpen}
+                onClose={closeSectionInfoModal}
+                seccion={sectionInfoModal.seccion}
+                tipoActividad={sectionInfoModal.tipoActividad}
             />
         </>
     );

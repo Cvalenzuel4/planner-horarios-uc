@@ -52,6 +52,13 @@ export async function eliminarRamo(sigla: string): Promise<void> {
     await db.ramos.delete(normalizarSigla(sigla));
 }
 
+/**
+ * Elimina TODOS los ramos de la base de datos
+ */
+export async function limpiarTodosRamos(): Promise<void> {
+    await db.ramos.clear();
+}
+
 // ============================================================================
 // OPERACIONES DE SECCIONES
 // ============================================================================

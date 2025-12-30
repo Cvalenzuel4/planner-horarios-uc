@@ -1,47 +1,98 @@
 /**
  * Generador de Horarios Automático
- * Permite seleccionar ramos y secciones específicas para generar combinaciones válidas
+ * Permite buscar ramos desde la API, seleccionar secciones específicas
+ * y generar combinaciones válidas de horarios
  */
 
 import { useState, useMemo } from 'react';
 import { Ramo, SeccionConMask, ResultadoGeneracion, PermisosTopeMap } from '../../types';
 import { generarHorarios, obtenerInfoCombinacion } from '../../core/scheduler';
 import { ConflictConfigModal } from './ConflictConfigModal';
-
+import { useCourseGenerator } from '../../hooks';
+import { SEMESTRE_ACTUAL } from '../../services/api.types';
 
 interface GeneratorProps {
     ramos: Ramo[];
+    onNuevosRamos: (ramos: Ramo[]) => void;
+    onLimpiarRamos: () => void;
     onPreviewResultado: (secciones: SeccionConMask[]) => void;
     onAplicarResultado: (secciones: SeccionConMask[]) => void;
     onClearPreview: () => void;
 }
 
 export const Generator: React.FC<GeneratorProps> = ({
-    ramos,
+    ramos: ramosLocales,
+    onNuevosRamos,
+    onLimpiarRamos,
     onPreviewResultado,
     onAplicarResultado,
     onClearPreview,
 }) => {
+    // ---------- Hook para cargar cursos desde API ----------
+    const {
+        isLoading: loadingAPI,
+        loadingProgress,
+        error: errorAPI,
+        cursosAPI,
+        erroresPorSigla,
+        fetchAllCourses,
+        clearCourses,
+    } = useCourseGenerator();
+
+    // ---------- Estados para input de siglas ----------
+    const [siglasInput, setSiglasInput] = useState('');
+    const [semestre, setSemestre] = useState(SEMESTRE_ACTUAL);
+
+    // ---------- Estados existentes ----------
     const [ramosSeleccionados, setRamosSeleccionados] = useState<Set<string>>(new Set());
-    // Mapa de sigla ramo → set de IDs de secciones seleccionadas
-    // Si un ramo no está en el mapa o su set está vacío, se usan todas las secciones
     const [seccionesFiltradas, setSeccionesFiltradas] = useState<Map<string, Set<string>>>(new Map());
-    // Ramos expandidos para mostrar sus secciones
     const [ramosExpandidos, setRamosExpandidos] = useState<Set<string>>(new Set());
 
     const [resultados, setResultados] = useState<ResultadoGeneracion[]>([]);
     const [generando, setGenerando] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [tiempoGeneracion, setTiempoGeneracion] = useState<number>(0);
-    // Permisos de tope de horario
     const [permisosTope, setPermisosTope] = useState<PermisosTopeMap>(new Map());
     const [showConfigModal, setShowConfigModal] = useState(false);
 
+    // ---------- Combinar ramos locales con los de la API ----------
+    const ramos = useMemo(() => {
+        // Los cursosAPI tienen prioridad (datos más frescos)
+        const ramosMap = new Map<string, Ramo>();
+
+        // Primero agregar locales
+        for (const ramo of ramosLocales) {
+            ramosMap.set(ramo.sigla, ramo);
+        }
+
+        // Sobrescribir/agregar con los de la API
+        for (const ramo of cursosAPI) {
+            ramosMap.set(ramo.sigla, ramo);
+        }
+
+        return Array.from(ramosMap.values());
+    }, [ramosLocales, cursosAPI]);
+
+    // ---------- Handler para cargar desde API ----------
+    const handleCargarDesdeAPI = async () => {
+        const siglas = siglasInput.split(/[,;\s]+/).filter(s => s.trim().length > 0);
+        if (siglas.length === 0) {
+            setError('Ingresa al menos una sigla (ej: ICS2123, MAT1610)');
+            return;
+        }
+
+        // Limpiar estado antes de cargar
+        setResultados([]);
+        onClearPreview();
+
+        await fetchAllCourses(siglas, semestre);
+    };
+
+    // ---------- Funciones existentes ----------
     const toggleRamo = (sigla: string) => {
         const nuevos = new Set(ramosSeleccionados);
         if (nuevos.has(sigla)) {
             nuevos.delete(sigla);
-            // También limpiar las secciones filtradas y colapsarlo
             const nuevosFiltros = new Map(seccionesFiltradas);
             nuevosFiltros.delete(sigla);
             setSeccionesFiltradas(nuevosFiltros);
@@ -52,7 +103,6 @@ export const Generator: React.FC<GeneratorProps> = ({
             nuevos.add(sigla);
         }
         setRamosSeleccionados(nuevos);
-        // Limpiar resultados anteriores
         setResultados([]);
         onClearPreview();
     };
@@ -87,12 +137,10 @@ export const Generator: React.FC<GeneratorProps> = ({
 
     const seleccionarTodasSecciones = (ramo: Ramo) => {
         const nuevosFiltros = new Map(seccionesFiltradas);
-        // Si ya están todas seleccionadas, deseleccionar todas (volver a "cualquiera")
         const seccionesActuales = nuevosFiltros.get(ramo.sigla);
         if (seccionesActuales && seccionesActuales.size === ramo.secciones.length) {
             nuevosFiltros.delete(ramo.sigla);
         } else {
-            // Seleccionar todas las secciones de este ramo
             nuevosFiltros.set(ramo.sigla, new Set(ramo.secciones.map(s => s.id)));
         }
         setSeccionesFiltradas(nuevosFiltros);
@@ -110,7 +158,6 @@ export const Generator: React.FC<GeneratorProps> = ({
 
     const isSeccionSeleccionada = (sigla: string, seccionId: string): boolean => {
         const filtro = seccionesFiltradas.get(sigla);
-        // Si no hay filtro, todas están disponibles (comportamiento "cualquiera")
         if (!filtro || filtro.size === 0) {
             return true;
         }
@@ -135,11 +182,9 @@ export const Generator: React.FC<GeneratorProps> = ({
         return ramos.filter(r => ramosSeleccionados.has(r.sigla));
     }, [ramos, ramosSeleccionados]);
 
-    // Estadísticas que consideran el filtro de secciones
     const estadisticas = useMemo(() => {
         if (ramosParaGenerar.length === 0) return null;
 
-        // Calcular con filtros aplicados
         let seccionesTotalCount = 0;
         let combinacionesPosibles = 1;
 
@@ -168,13 +213,11 @@ export const Generator: React.FC<GeneratorProps> = ({
         setResultados([]);
         onClearPreview();
 
-        // Ejecutar en siguiente tick para permitir actualización de UI
         await new Promise(resolve => setTimeout(resolve, 10));
 
         const inicio = performance.now();
 
         try {
-            // Pasar el filtro de secciones y permisos de tope al generador
             const results = generarHorarios(ramosParaGenerar, 500, seccionesFiltradas, permisosTope);
             const fin = performance.now();
             setTiempoGeneracion(fin - inicio);
@@ -199,15 +242,112 @@ export const Generator: React.FC<GeneratorProps> = ({
                     🔄 Generador de Horarios
                 </h2>
                 <p className="text-white/60 text-sm">
-                    Selecciona ramos y secciones específicas para generar combinaciones sin conflictos
+                    Busca ramos, selecciona secciones y genera combinaciones sin conflictos
                 </p>
+            </div>
+
+            {/* ========== NUEVA SECCIÓN: Buscar desde API ========== */}
+            <div className="p-4 border-b border-white/10 bg-white/5">
+                <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+                    🔍 Buscar Ramos desde API
+                </h3>
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                    <input
+                        type="text"
+                        value={siglasInput}
+                        onChange={(e) => setSiglasInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCargarDesdeAPI()}
+                        placeholder="Ej: ICS2123, MAT1610, FIS1514"
+                        className="input-styled flex-1"
+                        disabled={loadingAPI}
+                    />
+
+                    <select
+                        value={semestre}
+                        onChange={(e) => setSemestre(e.target.value)}
+                        className="select-styled w-full sm:w-28"
+                        disabled={loadingAPI}
+                    >
+                        <option value="2026-1">2026-1</option>
+                        <option value="2025-2">2025-2</option>
+                        <option value="2025-1">2025-1</option>
+                    </select>
+
+                    <button
+                        onClick={handleCargarDesdeAPI}
+                        disabled={loadingAPI || !siglasInput.trim()}
+                        className={`btn-primary px-4 whitespace-nowrap ${loadingAPI ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                        {loadingAPI ? (
+                            <span className="flex items-center gap-2">
+                                <span className="loader w-4 h-4" />
+                                Cargando...
+                            </span>
+                        ) : (
+                            '🚀 Cargar'
+                        )}
+                    </button>
+                </div>
+
+                {/* Progreso de carga */}
+                {loadingProgress && (
+                    <div className="mt-2 p-2 bg-indigo-500/20 rounded-lg text-sm text-indigo-200 flex items-center gap-2">
+                        <span className="loader w-3 h-3" />
+                        Buscando {loadingProgress.currentSigla}... ({loadingProgress.current}/{loadingProgress.total})
+                    </div>
+                )}
+
+                {/* Errores por sigla */}
+                {Object.keys(erroresPorSigla).length > 0 && (
+                    <div className="mt-2 p-2 bg-amber-500/20 rounded-lg text-sm text-amber-200">
+                        <span className="font-medium">⚠️ Algunas siglas no se encontraron:</span>
+                        <ul className="ml-4 mt-1 text-xs">
+                            {Object.entries(erroresPorSigla).map(([sigla, msg]) => (
+                                <li key={sigla}>• {sigla}: {msg}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Cursos cargados desde API */}
+                {cursosAPI.length > 0 && (
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                        <span className="text-emerald-300">
+                            ✅ {cursosAPI.length} ramo{cursosAPI.length !== 1 ? 's' : ''} cargado{cursosAPI.length !== 1 ? 's' : ''} desde la API
+                        </span>
+                        <button
+                            onClick={clearCourses}
+                            className="text-xs text-white/50 hover:text-white/70"
+                        >
+                            Limpiar
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Selector de ramos */}
             <div className="p-4 border-b border-white/10">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-white font-medium">Ramos a incluir:</h3>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        {/* Botón limpiar - solo visible si hay ramos */}
+                        {ramos.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    if (confirm('¿Estás seguro de que deseas eliminar TODOS los ramos cargados?')) {
+                                        clearCourses();
+                                        onLimpiarRamos();
+                                        deseleccionarTodos();
+                                    }
+                                }}
+                                className="text-xs text-red-300 hover:text-red-200 flex items-center gap-1"
+                                title="Eliminar todos los ramos cargados"
+                            >
+                                🗑️ Limpiar
+                            </button>
+                        )}
+                        {ramos.length > 0 && <span className="text-white/30">|</span>}
                         <button
                             onClick={seleccionarTodos}
                             className="text-xs text-indigo-300 hover:text-indigo-200"
@@ -226,13 +366,14 @@ export const Generator: React.FC<GeneratorProps> = ({
 
                 {ramos.length === 0 ? (
                     <p className="text-white/40 text-center py-4">
-                        No hay ramos disponibles. Agrega ramos primero.
+                        No hay ramos disponibles. Busca ramos desde la API o agrega ramos en el Planificador.
                     </p>
                 ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {ramos.map((ramo) => {
                             const isSelected = ramosSeleccionados.has(ramo.sigla);
                             const isExpanded = ramosExpandidos.has(ramo.sigla);
+                            const isFromAPI = cursosAPI.some(c => c.sigla === ramo.sigla);
 
                             return (
                                 <div key={ramo.sigla} className="space-y-1">
@@ -256,9 +397,14 @@ export const Generator: React.FC<GeneratorProps> = ({
                                         <div className="flex-1 min-w-0">
                                             <span className="text-sm font-medium text-white block truncate">
                                                 {ramo.sigla}
+                                                {isFromAPI && (
+                                                    <span className="ml-2 text-xs bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded">
+                                                        API
+                                                    </span>
+                                                )}
                                             </span>
                                             <span className="text-xs text-white/50 block truncate">
-                                                {getSeccionesSeleccionadasCount(ramo)}
+                                                {ramo.nombre} • {getSeccionesSeleccionadasCount(ramo)}
                                             </span>
                                         </div>
                                         {/* Botón expandir secciones */}
@@ -396,9 +542,9 @@ export const Generator: React.FC<GeneratorProps> = ({
             </div>
 
             {/* Error */}
-            {error && (
+            {(error || errorAPI) && (
                 <div className="m-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
-                    {error}
+                    {error || errorAPI}
                 </div>
             )}
 
@@ -447,6 +593,10 @@ export const Generator: React.FC<GeneratorProps> = ({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    // Persistir ramos de la API antes de aplicar
+                                                    if (cursosAPI.length > 0) {
+                                                        onNuevosRamos(cursosAPI);
+                                                    }
                                                     onAplicarResultado(resultado.secciones);
                                                 }}
                                                 className="btn-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity"
@@ -461,7 +611,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                     </>
                 )}
 
-                {!generando && resultados.length === 0 && !error && (
+                {!generando && resultados.length === 0 && !error && !errorAPI && (
                     <div className="text-center py-8 text-white/40">
                         <p className="text-4xl mb-2">📊</p>
                         <p>Selecciona ramos y haz clic en "Generar"</p>

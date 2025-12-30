@@ -14,6 +14,7 @@ import {
     actualizarSeccionesSeleccionadas,
     descargarDatos,
     subirDatos,
+    limpiarTodosRamos,
 } from './db';
 import {
     ScheduleGrid,
@@ -210,6 +211,17 @@ function App() {
     const handleLimpiarHorario = useCallback(() => {
         if (confirm('¿Estás seguro de que quieres limpiar todo el horario?')) {
             setSeccionesSeleccionadasIds(new Set());
+        }
+    }, []);
+
+    // Limpiar todos los ramos (del Generador)
+    const handleLimpiarRamos = useCallback(async () => {
+        try {
+            await limpiarTodosRamos();
+            setRamos([]);
+            setSeccionesSeleccionadasIds(new Set());
+        } catch (err) {
+            console.error('Error al limpiar ramos:', err);
         }
     }, []);
 
@@ -420,6 +432,8 @@ function App() {
                         <div className="w-full lg:w-96 glass-panel-dark flex-shrink-0 lg:self-start">
                             <Generator
                                 ramos={ramos}
+                                onNuevosRamos={handleNuevosRamos}
+                                onLimpiarRamos={handleLimpiarRamos}
                                 onPreviewResultado={handlePreviewResultado}
                                 onAplicarResultado={handleAplicarResultado}
                                 onClearPreview={handleClearPreview}
