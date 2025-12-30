@@ -12,6 +12,8 @@ export default {
                 laboratorio: '#7DD3FC',   // sky-300
                 ayudantia: '#34D399',     // emerald-400
                 taller: '#C084FC',        // purple-400
+                terreno: '#B45309',       // amber-700
+                practica: '#DC2626',      // red-600
                 otro: '#9CA3AF',          // gray-400
                 conflicto: '#EF4444',     // red-500
             },

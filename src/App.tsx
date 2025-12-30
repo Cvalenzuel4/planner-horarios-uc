@@ -3,17 +3,13 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
-import { Ramo, Seccion, SeccionConMask } from './types';
+import { Ramo, SeccionConMask } from './types';
 import { prepararRamo } from './core/bitmask';
 import {
     initDatabase,
     obtenerTodosRamos,
     agregarRamo,
     actualizarRamo,
-    eliminarRamo,
-    agregarSeccion,
-    actualizarSeccion,
-    eliminarSeccion,
     obtenerConfig,
     actualizarSeccionesSeleccionadas,
     descargarDatos,
@@ -21,24 +17,13 @@ import {
 } from './db';
 import {
     ScheduleGrid,
-    Sidebar,
-    RamoForm,
-    SeccionForm,
     Generator,
+    CourseSearch
 } from './components';
-import { datosIniciales } from './data';
+import { checkHealth } from './services';
 import { exportarHorarioExcel } from './utils/excelExport';
 
 type Tab = 'planner' | 'generator';
-type Modal = 'none' | 'ramo' | 'seccion';
-
-interface ModalState {
-    type: Modal;
-    sigla?: string;
-    seccionId?: string;
-    ramo?: Ramo;
-    seccion?: Seccion;
-}
 
 function App() {
     // Estado de datos
@@ -50,29 +35,23 @@ function App() {
 
     // Estado de UI
     const [tab, setTab] = useState<Tab>('planner');
-    const [modal, setModal] = useState<ModalState>({ type: 'none' });
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [gridHeight, setGridHeight] = useState<number | null>(null);
 
     // Ref para medir la altura del grid
     const gridContainerRef = useRef<HTMLDivElement>(null);
 
+    // Health check al inicio para despertar la API
+    useEffect(() => {
+        checkHealth();
+    }, []);
+
     // Cargar datos iniciales
     useEffect(() => {
         const init = async () => {
             try {
                 await initDatabase();
-                let ramosData = await obtenerTodosRamos();
-
-                // Si no hay datos, cargar los datos iniciales
-                if (ramosData.length === 0 && datosIniciales.ramos.length > 0) {
-                    console.log('Cargando datos iniciales...');
-                    for (const ramo of datosIniciales.ramos) {
-                        await agregarRamo(ramo);
-                    }
-                    ramosData = await obtenerTodosRamos();
-                }
-
+                const ramosData = await obtenerTodosRamos();
                 setRamos(ramosData);
 
                 const config = await obtenerConfig();
@@ -122,116 +101,37 @@ function App() {
         return () => window.removeEventListener('resize', updateGridHeight);
     }, [tab, seccionesSeleccionadas]);
 
-    // Handlers de CRUD
-    const handleAgregarRamo = useCallback(() => {
-        setModal({ type: 'ramo' });
-    }, []);
-
-    const handleEditarRamo = useCallback((ramo: Ramo) => {
-        setModal({ type: 'ramo', ramo });
-    }, []);
-
-    const handleEliminarRamo = useCallback(async (sigla: string) => {
+    // Handler para guardar ramos encontrados en la búsqueda
+    const handleNuevosRamos = useCallback(async (nuevosRamos: Ramo[]) => {
         try {
-            await eliminarRamo(sigla);
-            setRamos(prev => prev.filter(r => r.sigla !== sigla));
-            // Eliminar secciones seleccionadas de este ramo
-            setSeccionesSeleccionadasIds(prev => {
-                const nuevas = new Set(prev);
-                for (const id of prev) {
-                    if (id.startsWith(sigla + '-')) {
-                        nuevas.delete(id);
-                    }
+            // Actualizar estado y DB
+            const actualizados = [...ramos];
+            let cambio = false;
+
+            for (const nuevoRamo of nuevosRamos) {
+                const index = actualizados.findIndex(r => r.sigla === nuevoRamo.sigla);
+                if (index >= 0) {
+                    // Actualizar existente si es diferente?
+                    // Por simplicidad, asumimos que la API manda la info más reciente
+                    // y actualizamos siempre
+                    actualizados[index] = nuevoRamo;
+                    await actualizarRamo(nuevoRamo);
+                    cambio = true;
+                } else {
+                    // Agregar nuevo
+                    actualizados.push(nuevoRamo);
+                    await agregarRamo(nuevoRamo);
+                    cambio = true;
                 }
-                return nuevas;
-            });
-        } catch (err) {
-            alert('Error al eliminar: ' + (err as Error).message);
-        }
-    }, []);
-
-    const handleGuardarRamo = useCallback(async (ramo: Ramo) => {
-        try {
-            const existe = ramos.find(r => r.sigla === ramo.sigla);
-            if (existe) {
-                await actualizarRamo(ramo);
-                setRamos(prev => prev.map(r => r.sigla === ramo.sigla ? ramo : r));
-            } else {
-                await agregarRamo(ramo);
-                setRamos(prev => [...prev, ramo]);
             }
-            setModal({ type: 'none' });
-        } catch (err) {
-            alert('Error al guardar: ' + (err as Error).message);
-        }
-    }, [ramos]);
 
-    const handleAgregarSeccion = useCallback((sigla: string) => {
-        const ramo = ramos.find(r => r.sigla === sigla);
-        if (ramo) {
-            setModal({ type: 'seccion', sigla });
-        }
-    }, [ramos]);
-
-    const handleEditarSeccion = useCallback((sigla: string, seccionId: string) => {
-        const ramo = ramos.find(r => r.sigla === sigla);
-        const seccion = ramo?.secciones.find(s => s.id === seccionId);
-        if (ramo && seccion) {
-            setModal({ type: 'seccion', sigla, seccionId, seccion });
-        }
-    }, [ramos]);
-
-    const handleEliminarSeccion = useCallback(async (sigla: string, seccionId: string) => {
-        try {
-            await eliminarSeccion(sigla, seccionId);
-            setRamos(prev => prev.map(r => {
-                if (r.sigla === sigla) {
-                    return { ...r, secciones: r.secciones.filter(s => s.id !== seccionId) };
-                }
-                return r;
-            }));
-            setSeccionesSeleccionadasIds(prev => {
-                const nuevas = new Set(prev);
-                nuevas.delete(seccionId);
-                return nuevas;
-            });
-        } catch (err) {
-            alert('Error al eliminar sección: ' + (err as Error).message);
-        }
-    }, []);
-
-    const handleGuardarSeccion = useCallback(async (seccion: Seccion) => {
-        const sigla = modal.sigla!;
-        try {
-            const ramo = ramos.find(r => r.sigla === sigla);
-            if (!ramo) throw new Error('Ramo no encontrado');
-
-            const existe = ramo.secciones.find(s => s.id === seccion.id);
-            if (existe) {
-                await actualizarSeccion(sigla, seccion);
-                setRamos(prev => prev.map(r => {
-                    if (r.sigla === sigla) {
-                        return {
-                            ...r,
-                            secciones: r.secciones.map(s => s.id === seccion.id ? seccion : s),
-                        };
-                    }
-                    return r;
-                }));
-            } else {
-                await agregarSeccion(sigla, seccion);
-                setRamos(prev => prev.map(r => {
-                    if (r.sigla === sigla) {
-                        return { ...r, secciones: [...r.secciones, seccion] };
-                    }
-                    return r;
-                }));
+            if (cambio) {
+                setRamos(actualizados);
             }
-            setModal({ type: 'none' });
         } catch (err) {
-            alert('Error al guardar sección: ' + (err as Error).message);
+            console.error('Error al guardar nuevos ramos:', err);
         }
-    }, [modal.sigla, ramos]);
+    }, [ramos]);
 
     const handleToggleSeccion = useCallback((seccion: SeccionConMask) => {
         setSeccionesSeleccionadasIds(prev => {
@@ -312,13 +212,6 @@ function App() {
             setSeccionesSeleccionadasIds(new Set());
         }
     }, []);
-
-    // Obtener siguiente número de sección
-    const getSiguienteNumeroSeccion = useCallback((sigla: string) => {
-        const ramo = ramos.find(r => r.sigla === sigla);
-        if (!ramo || ramo.secciones.length === 0) return 1;
-        return Math.max(...ramo.secciones.map(s => s.numero)) + 1;
-    }, [ramos]);
 
     if (loading) {
         return (
@@ -448,27 +341,21 @@ function App() {
                             />
                         )}
 
-                        {/* Sidebar - drawer en móvil, fijo en desktop */}
+                        {/* Sidebar - Buscador de Cursos */}
                         <div
                             className={`
                                 fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto
                                 transform transition-transform duration-300 ease-in-out
                                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                                 flex-shrink-0 lg:h-full max-h-[100vh] lg:max-h-full
-                                p-3 md:p-6 pr-0 md:pr-0
+                                w-full max-w-sm lg:w-96
                             `}
                             style={gridHeight ? { height: `${gridHeight}px` } : undefined}
                         >
-                            <Sidebar
-                                ramos={ramos}
-                                seccionesSeleccionadas={seccionesSeleccionadas}
+                            <CourseSearch
+                                seccionesSeleccionadasIds={seccionesSeleccionadasIds}
                                 onToggleSeccion={handleToggleSeccion}
-                                onAgregarRamo={handleAgregarRamo}
-                                onEditarRamo={handleEditarRamo}
-                                onEliminarRamo={handleEliminarRamo}
-                                onAgregarSeccion={handleAgregarSeccion}
-                                onEditarSeccion={handleEditarSeccion}
-                                onEliminarSeccion={handleEliminarSeccion}
+                                onNuevosRamos={handleNuevosRamos}
                             />
                         </div>
 
@@ -499,6 +386,14 @@ function App() {
                                 <span className="flex items-center gap-1 text-xs md:text-sm">
                                     <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-taller" />
                                     <span className="text-white/70">Taller</span>
+                                </span>
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-terreno" />
+                                    <span className="text-white/70">Terreno</span>
+                                </span>
+                                <span className="flex items-center gap-1 text-xs md:text-sm">
+                                    <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-practica" />
+                                    <span className="text-white/70">Práctica</span>
                                 </span>
                                 <span className="flex items-center gap-1 text-xs md:text-sm">
                                     <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-500 animate-pulse" />
@@ -544,30 +439,6 @@ function App() {
                 )
                 }
             </main >
-
-            {/* Modales */}
-            {
-                modal.type === 'ramo' && (
-                    <RamoForm
-                        ramo={modal.ramo}
-                        onSubmit={handleGuardarRamo}
-                        onCancel={() => setModal({ type: 'none' })}
-                        existingSiglas={ramos.map(r => r.sigla)}
-                    />
-                )
-            }
-
-            {
-                modal.type === 'seccion' && modal.sigla && (
-                    <SeccionForm
-                        sigla={modal.sigla}
-                        seccion={modal.seccion}
-                        siguienteNumero={getSiguienteNumeroSeccion(modal.sigla)}
-                        onSubmit={handleGuardarSeccion}
-                        onCancel={() => setModal({ type: 'none' })}
-                    />
-                )
-            }
         </div >
     );
 }

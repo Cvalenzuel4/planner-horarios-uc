@@ -14,7 +14,7 @@ export type Dia = 'L' | 'M' | 'W' | 'J' | 'V' | 'S';
 export type Modulo = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 /** Tipos de actividad con colores asociados */
-export type TipoActividad = 'catedra' | 'ayudantia' | 'laboratorio' | 'taller' | 'otro';
+export type TipoActividad = 'catedra' | 'ayudantia' | 'laboratorio' | 'taller' | 'terreno' | 'practica' | 'otro';
 
 /** Array constante de días para iteración */
 export const DIAS: Dia[] = ['L', 'M', 'W', 'J', 'V', 'S'];
@@ -152,6 +152,8 @@ export const COLORES_ACTIVIDAD: Record<TipoActividad, { bg: string; text: string
     laboratorio: { bg: 'bg-laboratorio', text: 'text-gray-900', border: 'border-sky-500' },
     ayudantia: { bg: 'bg-ayudantia', text: 'text-gray-900', border: 'border-emerald-500' },
     taller: { bg: 'bg-taller', text: 'text-white', border: 'border-purple-600' },
+    terreno: { bg: 'bg-terreno', text: 'text-gray-900', border: 'border-amber-700' },
+    practica: { bg: 'bg-practica', text: 'text-white', border: 'border-red-600' },
     otro: { bg: 'bg-otro', text: 'text-gray-900', border: 'border-gray-500' },
 };
 
@@ -161,6 +163,8 @@ export const NOMBRES_ACTIVIDAD: Record<TipoActividad, string> = {
     laboratorio: 'Laboratorio',
     ayudantia: 'Ayudantía',
     taller: 'Taller',
+    terreno: 'Terreno',
+    practica: 'Práctica',
     otro: 'Otro',
 };
 
