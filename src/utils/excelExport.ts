@@ -26,6 +26,8 @@ const COLORES_HEX: Record<TipoActividad, { bg: string; text: string }> = {
     laboratorio: { bg: '7DD3FC', text: '1F2937' }, // Azul claro, texto oscuro
     ayudantia: { bg: '34D399', text: '1F2937' },   // Verde, texto oscuro
     taller: { bg: 'C084FC', text: 'FFFFFF' },      // Púrpura, texto blanco
+    terreno: { bg: 'B45309', text: 'FFFFFF' },     // Amber-700, texto blanco
+    practica: { bg: 'DC2626', text: 'FFFFFF' },    // Red-600, texto blanco
     otro: { bg: '9CA3AF', text: '1F2937' },        // Gris, texto oscuro
 };
 
@@ -299,6 +301,8 @@ export async function exportarHorarioExcel(seccionesSeleccionadas: SeccionConMas
                 laboratorio: 'Lab',
                 ayudantia: 'Ayud',
                 taller: 'Taller',
+                terreno: 'Terreno',
+                practica: 'Práctica',
                 otro: 'Otro',
             };
             return nombres[t];
