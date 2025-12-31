@@ -35,6 +35,7 @@ function App() {
     const [previewSecciones, setPreviewSecciones] = useState<SeccionConMask[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [dbInitialized, setDbInitialized] = useState(false);
 
     // Estado de UI
     const [tab, setTab] = useState<Tab>('planner');
@@ -62,6 +63,7 @@ function App() {
                 if (config?.seccionesSeleccionadas) {
                     setSeccionesSeleccionadasIds(new Set(config.seccionesSeleccionadas));
                 }
+                setDbInitialized(true);
             } catch (err) {
                 setError('Error al cargar la base de datos: ' + (err as Error).message);
             } finally {
@@ -73,10 +75,10 @@ function App() {
 
     // Guardar secciones seleccionadas cuando cambien
     useEffect(() => {
-        if (!loading) {
+        if (dbInitialized && !loading) {
             actualizarSeccionesSeleccionadas(Array.from(seccionesSeleccionadasIds));
         }
-    }, [seccionesSeleccionadasIds, loading]);
+    }, [seccionesSeleccionadasIds, loading, dbInitialized]);
 
     // Calcular secciones seleccionadas con sus datos completos
     const seccionesSeleccionadas = useMemo(() => {
