@@ -7,8 +7,7 @@ import { useState, useEffect } from 'react';
 import {
     buscarCursos,
     checkHealth,
-    CursoAPI,
-    SEMESTRE_ACTUAL
+    CursoAPI
 } from '../../services';
 import { CourseCard } from './CourseCard';
 import { SeccionConMask, Ramo } from '../../types';
@@ -18,11 +17,12 @@ interface CourseSearchProps {
     onToggleSeccion: (seccion: SeccionConMask) => void;
     onNuevosRamos: (ramos: Ramo[]) => Promise<void>;
     externalSearchRequest?: { term: string; timestamp: number } | null;
+    semestre: string;
+    onSemestreChange: (semestre: string) => void;
 }
 
-export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNuevosRamos, externalSearchRequest }: CourseSearchProps) {
+export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNuevosRamos, externalSearchRequest, semestre, onSemestreChange }: CourseSearchProps) {
     const [query, setQuery] = useState('');
-    const [semestre, setSemestre] = useState(SEMESTRE_ACTUAL);
     const [loading, setLoading] = useState(false);
     const [apiReady, setApiReady] = useState(false);
     const [results, setResults] = useState<CursoAPI[]>([]);
@@ -128,7 +128,7 @@ export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNue
                     {/* Selector de semestre - ancho automático, no crece */}
                     <select
                         value={semestre}
-                        onChange={(e) => setSemestre(e.target.value)}
+                        onChange={(e) => onSemestreChange(e.target.value)}
                         className="select-styled h-10 w-auto flex-none text-sm"
                     >
                         <option value="2026-1">2026-1</option>

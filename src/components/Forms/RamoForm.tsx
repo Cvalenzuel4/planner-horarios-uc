@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Ramo } from '../../types';
 import { validarSigla, normalizarSigla } from '../../core/validation';
+import { SEMESTRE_ACTUAL } from '../../services';
 
 interface RamoFormProps {
     ramo?: Ramo | null;
@@ -61,6 +62,7 @@ export const RamoForm: React.FC<RamoFormProps> = ({
         onSubmit({
             sigla: siglaNorm,
             nombre: nombre.trim(),
+            semestre: ramo?.semestre || SEMESTRE_ACTUAL,
             secciones: ramo?.secciones || [],
         });
     };

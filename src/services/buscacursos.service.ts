@@ -13,6 +13,7 @@ import {
     esModuloValido,
     VacanteAPI,
     VacantesResponse,
+    BuscarMultipleResponse,
 } from './api.types';
 import { Ramo, Seccion, Actividad, Bloque, TipoActividad, Modulo } from '../types';
 
@@ -159,6 +160,7 @@ export async function buscarCursos(
                 ramosMap.set(siglaRamo, {
                     sigla: siglaRamo,
                     nombre: cursoAPI.nombre,
+                    semestre: semestre,
                     secciones: [],
                 });
             }
@@ -190,6 +192,154 @@ export async function buscarCursos(
             ramos: [],
             cursosAPI: [],
             message: `Error de conexión: ${error instanceof Error ? error.message : 'desconocido'}`,
+        };
+    }
+}
+
+// ============================================================================
+// BÚSQUEDA MÚLTIPLE DE CURSOS (OPTIMIZADA)
+// ============================================================================
+
+/** Resultado de búsqueda múltiple */
+export interface BusquedaMultipleResult {
+    success: boolean;
+    /** Map<sigla, Ramo[]> para fácil acceso */
+    resultados: Map<string, Ramo[]>;
+    /** Errores por sigla */
+    erroresPorSigla: Record<string, string>;
+    meta: {
+        siglasExitosas: number;
+        totalSecciones: number;
+    };
+}
+
+/**
+ * Busca múltiples cursos en paralelo usando el endpoint optimizado.
+ * Ideal cuando se buscan 2+ siglas (carga guardados, importación, etc.)
+ * 
+ * @param siglas - Array de siglas a buscar
+ * @param semestre - Semestre a consultar (default: SEMESTRE_ACTUAL)
+ * @returns Map con resultados por sigla y errores individuales
+ */
+export async function buscarMultiplesCursos(
+    siglas: string[],
+    semestre: string = SEMESTRE_ACTUAL
+): Promise<BusquedaMultipleResult> {
+    // Limpiar siglas
+    const siglasLimpias = siglas
+        .map(s => s.trim().toUpperCase())
+        .filter(s => s.length > 0);
+
+    if (siglasLimpias.length === 0) {
+        return {
+            success: false,
+            resultados: new Map(),
+            erroresPorSigla: {},
+            meta: { siglasExitosas: 0, totalSecciones: 0 },
+        };
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+        const url = `${API_BASE_URL}/api/v1/cursos/buscar-multiple`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ siglas: siglasLimpias, semestre }),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            if (response.status === 503) {
+                return {
+                    success: false,
+                    resultados: new Map(),
+                    erroresPorSigla: {},
+                    meta: { siglasExitosas: 0, totalSecciones: 0 },
+                };
+            }
+            return {
+                success: false,
+                resultados: new Map(),
+                erroresPorSigla: {},
+                meta: { siglasExitosas: 0, totalSecciones: 0 },
+            };
+        }
+
+        const data: BuscarMultipleResponse = await response.json();
+
+        if (!data.success) {
+            return {
+                success: false,
+                resultados: new Map(),
+                erroresPorSigla: {},
+                meta: { siglasExitosas: 0, totalSecciones: 0 },
+            };
+        }
+
+        // Procesar resultados: convertir a Map<sigla, Ramo[]>
+        const resultados = new Map<string, Ramo[]>();
+        const erroresPorSigla: Record<string, string> = {};
+
+        for (const item of data.data) {
+            if (item.success && item.cursos.length > 0) {
+                // Agrupar cursos por sigla (por si acaso la API agrupa diferente)
+                const ramosMap = new Map<string, Ramo>();
+
+                for (const cursoAPI of item.cursos) {
+                    const siglaRamo = cursoAPI.sigla;
+
+                    if (!ramosMap.has(siglaRamo)) {
+                        ramosMap.set(siglaRamo, {
+                            sigla: siglaRamo,
+                            nombre: cursoAPI.nombre,
+                            semestre: semestre,
+                            secciones: [],
+                        });
+                    }
+
+                    const ramo = ramosMap.get(siglaRamo)!;
+                    const seccion = convertirCursoAPIaSeccion(cursoAPI);
+                    ramo.secciones.push(seccion);
+                }
+
+                resultados.set(item.sigla, Array.from(ramosMap.values()));
+            } else if (item.error) {
+                erroresPorSigla[item.sigla] = item.error;
+            } else {
+                erroresPorSigla[item.sigla] = 'Curso no encontrado';
+            }
+        }
+
+        return {
+            success: true,
+            resultados,
+            erroresPorSigla,
+            meta: {
+                siglasExitosas: data.meta.siglas_exitosas,
+                totalSecciones: data.meta.total_secciones,
+            },
+        };
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+            return {
+                success: false,
+                resultados: new Map(),
+                erroresPorSigla: {},
+                meta: { siglasExitosas: 0, totalSecciones: 0 },
+            };
+        }
+
+        return {
+            success: false,
+            resultados: new Map(),
+            erroresPorSigla: {},
+            meta: { siglasExitosas: 0, totalSecciones: 0 },
         };
     }
 }

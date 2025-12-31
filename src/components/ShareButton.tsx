@@ -1,33 +1,27 @@
 import { useState } from 'react';
 import { Ramo } from '../types';
-import { createSnapshotFromState, encodeSharedSnapshot } from '../domain/share';
+import { encodeShared } from '../domain/share';
 
 interface ShareButtonProps {
     ramos: Ramo[];
     selectedIds: Set<string>;
+    semestre: string;
 }
 
-export const ShareButton = ({ ramos, selectedIds }: ShareButtonProps) => {
+export const ShareButton = ({ ramos, selectedIds, semestre }: ShareButtonProps) => {
     const [status, setStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
 
     const handleShare = async () => {
-        if (selectedIds.size === 0) {
-            // Feedback opcional si no hay nada que compartir
-        }
-
         try {
             setStatus('copying');
 
-            // 1. Crear snapshot optimizado
-            const snapshot = createSnapshotFromState(ramos, Array.from(selectedIds));
+            // 1. Codificar versión minimalista (V1)
+            const encoded = encodeShared(semestre, ramos, Array.from(selectedIds));
 
-            // 2. Codificar
-            const encoded = encodeSharedSnapshot(snapshot);
-
-            // 3. Construir URL
+            // 2. Construir URL
             const shareUrl = `${window.location.origin}${window.location.pathname}#s=${encoded}`;
 
-            // 4. Copiar al clipboard
+            // 3. Copiar al clipboard
             await navigator.clipboard.writeText(shareUrl);
 
             setStatus('copied');
@@ -66,11 +60,9 @@ export const ShareButton = ({ ramos, selectedIds }: ShareButtonProps) => {
                     strokeLinejoin="round"
                     className="text-gray-600"
                 >
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
             )}
 
@@ -79,7 +71,10 @@ export const ShareButton = ({ ramos, selectedIds }: ShareButtonProps) => {
             )}
 
             {status === 'copied' && (
-                <span className="font-bold text-green-600 text-lg">✓</span>
+                <div className="flex items-center gap-1">
+                    <span className="font-bold text-green-600">✓</span>
+                    <span className="text-green-700 font-medium hidden sm:inline">Copiado</span>
+                </div>
             )}
 
             {status === 'error' && (

@@ -3,12 +3,11 @@
  * Permite buscar ramos, generar combinaciones y visualizarlas interactivamente
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Ramo, SeccionConMask, ResultadoGeneracion, PermisosTopeMap } from '../../types';
 import { generarHorarios, obtenerInfoCombinacion } from '../../core/scheduler';
 import { ConflictConfigModal } from './ConflictConfigModal';
 import { useCourseGenerator } from '../../hooks';
-import { SEMESTRE_ACTUAL } from '../../services/api.types';
 import { ScheduleGrid } from '../Grid';
 
 interface GeneratorProps {
@@ -17,6 +16,8 @@ interface GeneratorProps {
     onLimpiarRamos: () => void;
     onEliminarRamos: (siglas: string[]) => Promise<void>;
     onAplicarResultado: (secciones: SeccionConMask[]) => void;
+    semestre: string;
+    onSemestreChange: (semestre: string) => void;
     // Removed unused preview props
 }
 
@@ -26,6 +27,8 @@ export const Generator: React.FC<GeneratorProps> = ({
     onLimpiarRamos,
     onEliminarRamos,
     onAplicarResultado,
+    semestre,
+    onSemestreChange,
 }) => {
     // ---------- Hook para cargar cursos desde API ----------
     const {
@@ -39,9 +42,13 @@ export const Generator: React.FC<GeneratorProps> = ({
         removeCourses,
     } = useCourseGenerator();
 
+    // Limpiar cursos de la API cuando cambia el semestre
+    useEffect(() => {
+        clearCourses();
+    }, [semestre]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // ---------- Estados para input de siglas ----------
     const [siglasInput, setSiglasInput] = useState('');
-    const [semestre, setSemestre] = useState(SEMESTRE_ACTUAL);
 
     // ---------- Estados de configuración ----------
     const [ramosSeleccionados, setRamosSeleccionados] = useState<Set<string>>(new Set());
@@ -266,7 +273,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                             <div className="flex gap-2">
                                 <select
                                     value={semestre}
-                                    onChange={(e) => setSemestre(e.target.value)}
+                                    onChange={(e) => onSemestreChange(e.target.value)}
                                     className="select-styled text-sm py-1.5 w-32"
                                     disabled={loadingAPI}
                                 >

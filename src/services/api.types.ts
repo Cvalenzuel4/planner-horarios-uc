@@ -7,6 +7,26 @@
 // TIPOS DE LA API EXTERNA
 // ============================================================================
 
+/** Resultado individual del endpoint buscar-multiple */
+export interface CursoBulkResult {
+    sigla: string;
+    success: boolean;
+    cursos: CursoAPI[];
+    error: string | null;
+}
+
+/** Respuesta del endpoint POST /api/v1/cursos/buscar-multiple */
+export interface BuscarMultipleResponse {
+    success: boolean;
+    data: CursoBulkResult[];
+    meta: {
+        semestre: string;
+        siglas_solicitadas: number;
+        siglas_exitosas: number;
+        total_secciones: number;
+    };
+}
+
 /** Respuesta de la API de búsqueda de cursos */
 export interface APIResponse {
     success: boolean;

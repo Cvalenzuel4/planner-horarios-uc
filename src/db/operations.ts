@@ -11,29 +11,41 @@ import { normalizarSigla, generarIdSeccion } from '../core/validation';
 // ============================================================================
 
 /**
- * Obtiene todos los ramos de la base de datos
+ * Obtiene todos los ramos de la base de datos para un semestre dado
+ */
+export async function obtenerRamosPorSemestre(semestre: string): Promise<Ramo[]> {
+    console.log(`[DB] Obteniendo ramos para semestre: ${semestre}`);
+    const ramos = await db.ramos.where('semestre').equals(semestre).toArray();
+    console.log(`[DB] Ramos encontrados para ${semestre}: ${ramos.length}`, ramos.map(r => r.sigla));
+    return ramos;
+}
+
+/**
+ * Obtiene todos los ramos (para migración o debug)
  */
 export async function obtenerTodosRamos(): Promise<Ramo[]> {
     return await db.ramos.toArray();
 }
 
 /**
- * Obtiene un ramo por su sigla
+ * Obtiene un ramo por su sigla y semestre
  */
-export async function obtenerRamo(sigla: string): Promise<Ramo | undefined> {
-    return await db.ramos.get(normalizarSigla(sigla));
+export async function obtenerRamo(sigla: string, semestre: string): Promise<Ramo | undefined> {
+    const siglaNorm = normalizarSigla(sigla);
+    return await db.ramos.get({ sigla: siglaNorm, semestre });
 }
 
 /**
  * Agrega un nuevo ramo
  */
 export async function agregarRamo(ramo: Ramo): Promise<string> {
+    console.log(`[DB] Agregando ramo: ${ramo.sigla} al semestre ${ramo.semestre}`);
     const ramoNormalizado: Ramo = {
         ...ramo,
         sigla: normalizarSigla(ramo.sigla),
         secciones: ramo.secciones || [],
     };
-    await db.ramos.add(ramoNormalizado);
+    await db.ramos.put(ramoNormalizado);
     return ramoNormalizado.sigla;
 }
 
@@ -46,14 +58,21 @@ export async function actualizarRamo(ramo: Ramo): Promise<void> {
 }
 
 /**
- * Elimina un ramo por su sigla
+ * Elimina un ramo por su sigla y semestre
  */
-export async function eliminarRamo(sigla: string): Promise<void> {
-    await db.ramos.delete(normalizarSigla(sigla));
+export async function eliminarRamo(sigla: string, semestre: string): Promise<void> {
+    await db.ramos.where({ sigla: normalizarSigla(sigla), semestre }).delete();
 }
 
 /**
- * Elimina TODOS los ramos de la base de datos
+ * Elimina TODOS los ramos de un semestre
+ */
+export async function limpiarRamosSemestre(semestre: string): Promise<void> {
+    await db.ramos.where('semestre').equals(semestre).delete();
+}
+
+/**
+ * Elimina TODOS los ramos de la base de datos (Global)
  */
 export async function limpiarTodosRamos(): Promise<void> {
     await db.ramos.clear();
@@ -66,10 +85,10 @@ export async function limpiarTodosRamos(): Promise<void> {
 /**
  * Agrega una sección a un ramo existente
  */
-export async function agregarSeccion(sigla: string, seccion: Seccion): Promise<void> {
-    const ramo = await obtenerRamo(sigla);
+export async function agregarSeccion(sigla: string, semestre: string, seccion: Seccion): Promise<void> {
+    const ramo = await obtenerRamo(sigla, semestre);
     if (!ramo) {
-        throw new Error(`Ramo ${sigla} no encontrado`);
+        throw new Error(`Ramo ${sigla} no encontrado en semestre ${semestre}`);
     }
 
     // Generar ID si no existe
@@ -84,10 +103,10 @@ export async function agregarSeccion(sigla: string, seccion: Seccion): Promise<v
 /**
  * Actualiza una sección existente
  */
-export async function actualizarSeccion(sigla: string, seccion: Seccion): Promise<void> {
-    const ramo = await obtenerRamo(sigla);
+export async function actualizarSeccion(sigla: string, semestre: string, seccion: Seccion): Promise<void> {
+    const ramo = await obtenerRamo(sigla, semestre);
     if (!ramo) {
-        throw new Error(`Ramo ${sigla} no encontrado`);
+        throw new Error(`Ramo ${sigla} no encontrado en semestre ${semestre}`);
     }
 
     const index = ramo.secciones.findIndex(s => s.id === seccion.id);
@@ -102,10 +121,10 @@ export async function actualizarSeccion(sigla: string, seccion: Seccion): Promis
 /**
  * Elimina una sección de un ramo
  */
-export async function eliminarSeccion(sigla: string, seccionId: string): Promise<void> {
-    const ramo = await obtenerRamo(sigla);
+export async function eliminarSeccion(sigla: string, semestre: string, seccionId: string): Promise<void> {
+    const ramo = await obtenerRamo(sigla, semestre);
     if (!ramo) {
-        throw new Error(`Ramo ${sigla} no encontrado`);
+        throw new Error(`Ramo ${sigla} no encontrado en semestre ${semestre}`);
     }
 
     ramo.secciones = ramo.secciones.filter(s => s.id !== seccionId);
@@ -117,12 +136,13 @@ export async function eliminarSeccion(sigla: string, seccionId: string): Promise
  */
 export async function agregarActividad(
     sigla: string,
+    semestre: string,
     seccionId: string,
     actividad: Actividad
 ): Promise<void> {
-    const ramo = await obtenerRamo(sigla);
+    const ramo = await obtenerRamo(sigla, semestre);
     if (!ramo) {
-        throw new Error(`Ramo ${sigla} no encontrado`);
+        throw new Error(`Ramo ${sigla} no encontrado en semestre ${semestre}`);
     }
 
     const seccion = ramo.secciones.find(s => s.id === seccionId);
@@ -154,17 +174,23 @@ export async function guardarConfig(config: Partial<ConfigUsuario>): Promise<voi
     const configActual = await obtenerConfig();
     const nuevaConfig: ConfigUsuario = {
         id: CONFIG_ID,
-        seccionesSeleccionadas: config.seccionesSeleccionadas || configActual?.seccionesSeleccionadas || [],
+        seccionesSeleccionadas: undefined, // Deprecated, cleaned on save
+        seccionesPorSemestre: config.seccionesPorSemestre || configActual?.seccionesPorSemestre || {},
         ultimaActualizacion: Date.now(),
     };
     await db.config.put(nuevaConfig);
 }
 
 /**
- * Actualiza las secciones seleccionadas
+ * Actualiza las secciones seleccionadas para un semestre específico
  */
-export async function actualizarSeccionesSeleccionadas(secciones: string[]): Promise<void> {
-    await guardarConfig({ seccionesSeleccionadas: secciones });
+export async function actualizarSeccionesSeleccionadas(semestre: string, secciones: string[]): Promise<void> {
+    const config = await obtenerConfig();
+    const seccionesPorSemestre = config?.seccionesPorSemestre || {};
+
+    seccionesPorSemestre[semestre] = secciones;
+
+    await guardarConfig({ seccionesPorSemestre });
 }
 
 // ============================================================================
@@ -209,6 +235,7 @@ export async function importarDatos(datos: DatosExportados, reemplazar: boolean 
             const ramoNormalizado: Ramo = {
                 sigla: normalizarSigla(ramo.sigla),
                 nombre: ramo.nombre,
+                semestre: ramo.semestre || '2026-1', // Default legacy
                 secciones: ramo.secciones || [],
             };
             await db.ramos.put(ramoNormalizado);

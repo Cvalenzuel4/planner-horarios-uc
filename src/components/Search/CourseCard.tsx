@@ -25,6 +25,7 @@ export function CourseCard({ curso, seccionesSeleccionadasIds, onToggleSeccion }
         const ramoTemp = {
             sigla: curso.sigla,
             nombre: curso.nombre,
+            semestre: '', // Placeholder para cálculo de bitmask
             secciones: [seccion]
         };
         const [seccionPreparada] = prepararRamo(ramoTemp);

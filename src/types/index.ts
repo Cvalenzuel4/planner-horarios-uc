@@ -82,6 +82,7 @@ export interface Seccion {
 export interface Ramo {
     sigla: string;        // ID único (ej: "MAT1620")
     nombre: string;       // Nombre descriptivo
+    semestre: string;     // Semestre (ej: "2026-1")
     secciones: Seccion[];
 }
 
@@ -99,7 +100,8 @@ export interface SeccionConMask extends Seccion {
 /** Configuración de usuario persistida */
 export interface ConfigUsuario {
     id: string;
-    seccionesSeleccionadas: string[]; // Array de IDs de secciones
+    seccionesSeleccionadas?: string[]; // Deprecated: Array de IDs de secciones (legacy)
+    seccionesPorSemestre: Record<string, string[]>; // Mapa semestre -> IDs secciones
     ultimaActualizacion: number;      // Timestamp
 }
 

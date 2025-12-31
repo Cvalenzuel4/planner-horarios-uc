@@ -1,103 +1,93 @@
+
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { Ramo } from '../types';
 
 /**
- * Representación serializable de un horario compartido.
- * Versionado para permitir evolución futura de la estructura.
+ * Snapshot mínimo para compartir.
+ * Solo contiene el semestre y un array de tuplas [sigla, id_seccion].
+ * Usa nombres de propiedades cortos para minimizar el tamaño del JSON.
  */
-export interface SharedScheduleV1 {
-    v: 1;                 // Versión del snapshot
-    ts: number;           // Timestamp de creación
-    ramos: Ramo[];        // Lista completa de ramos (para no depender de API en el receptor)
-    selectedIds: string[];// IDs de secciones seleccionadas
+export interface SharedPlanV1 {
+    v: 1;                 // Versión
+    sem: string;          // Semestre (ej: "2025-2")
+    p: [string, string][];// Pares: [sigla, id_seccion_o_numero]
 }
 
 /**
- * Type guard para validar que un objeto desconocido es un SharedScheduleV1 válido.
+ * Valida si un objeto es un SharedPlanV1 válido.
  */
-function isSharedScheduleV1(obj: any): obj is SharedScheduleV1 {
+export function isSharedPlanV1(obj: any): obj is SharedPlanV1 {
     return (
         obj &&
         obj.v === 1 &&
-        typeof obj.ts === 'number' &&
-        Array.isArray(obj.ramos) &&
-        Array.isArray(obj.selectedIds)
+        typeof obj.sem === 'string' &&
+        Array.isArray(obj.p) &&
+        obj.p.every((pair: any) => Array.isArray(pair) && pair.length === 2 && typeof pair[0] === 'string' && typeof pair[1] === 'string')
     );
 }
 
 /**
- * Crea un snapshot listo para compartir desde el estado actual.
+ * Crea un string codificado desde el estado actual.
+ * Extrae solo la información mínima necesaria.
  */
-export function createSnapshotFromState(ramos: Ramo[], selectedIds: string[]): SharedScheduleV1 {
-    // Para optimizar tamaño, podríamos filtrar solo los ramos que tienen secciones seleccionadas,
-    // pero para seguridad y contexto completo (ej: mostrar opciones no seleccionadas del mismo ramo),
-    // guardamos los ramos que están cargados en el contexto "mis ramos".
+export function encodeShared(semestre: string, ramos: Ramo[], selectedIds: string[]): string {
+    // Filtrar solo los ramos que tienen alguna sección seleccionada
+    // O si queremos permitir compartir ramos sin selección (ej: para que el otro elija),
+    // podríamos incluirlos con "0" o similar, pero por ahora seguimos la spec:
+    // "lista de pares (sigla, sección)"
 
-    // OPTIMIZACIÓN DE TAMAÑO:
-    // Filtramos los ramos para incluir SOLO las secciones que están seleccionadas.
-    // Esto reduce drásticamente el tamaño del payload (links más cortos).
-    // Si un ramo no tiene secciones seleccionadas, lo incluimos "vacío" o tal cual?
-    // Decisión: Si no hay selección, no mandamos las secciones (el usuario puede buscarlas de nuevo).
-    // Si hay selección, mandamos SOLO esa sección.
+    // Convertimos selectedIds a un Set para búsqueda rápida
+    const selectedSet = new Set(selectedIds);
 
-    const optimizedRamos = ramos.map(ramo => {
-        const seccionesSeleccionadas = ramo.secciones.filter(s => selectedIds.includes(s.id));
+    const pairs: [string, string][] = [];
 
-        // Si hay secciones seleccionadas, guardamos SOLO esas.
-        if (seccionesSeleccionadas.length > 0) {
-            return {
-                ...ramo,
-                secciones: seccionesSeleccionadas
-            };
-        }
+    ramos.forEach(ramo => {
+        ramo.secciones.forEach(seccion => {
+            if (selectedSet.has(seccion.id)) {
+                // Usamos el número de sección si es numérico simple, o el ID si es complejo.
+                // Idealmente usamos el identificador más corto pero robusto.
+                // Como reconstruimos via API, el "número" (ej "1") es lo que necesitamos buscar en la lista de secciones devuelta.
+                // Pero el ID interno suele ser "SIGLA-NUMERO" (ej "IIC2233-1").
+                // Si guardamos solo "1", ahorramos bytes.
+                // La spec dice: "p: [string, string][]" ej: [["EYP1113","1"]]
+                // Asumimos que seccion.numero es lo que queremos.
+                pairs.push([ramo.sigla, String(seccion.numero)]);
+            }
+        });
 
-        // Si no hay secciones seleccionadas del ramo, para ahorrar espacio,
-        // podríamos enviar el ramo SIN secciones, obligando a re-buscar si se quiere editar.
-        // Esto mantiene el "nombre" en la lista de mis ramos.
-        return {
-            ...ramo,
-            secciones: []
-        };
+        // Opcional: Si un ramo no tiene selección, ¿lo incluimos?
+        // La spec no lo explicita, pero es útil compartir "estoy viendo estos ramos".
+        // Para soportar eso, podríamos usar un marcador especial para sección, ej: "0" o ""
+        // Por ahora, solo compartimos LO SELECCIONADO según el objetivo "Compartir horario".
+        // Si no hay horario armado, no hay mucho que compartir.
     });
 
-    return {
+    const plan: SharedPlanV1 = {
         v: 1,
-        ts: Date.now(),
-        ramos: optimizedRamos,
-        selectedIds: selectedIds
+        sem: semestre,
+        p: pairs
     };
-}
 
-
-/**
- * Comprime y codifica el snapshot en un string seguro para URL.
- */
-export function encodeSharedSnapshot(snapshot: SharedScheduleV1): string {
-    const json = JSON.stringify(snapshot);
+    const json = JSON.stringify(plan);
     return compressToEncodedURIComponent(json);
 }
 
 /**
- * Decodifica, descomprime y valida un hash de la URL.
- * Retorna null si es inválido o falla.
+ * Decodifica y valida el string compartido.
  */
-export function decodeSharedSnapshot(encoded: string): SharedScheduleV1 | null {
+export function decodeShared(encoded: string): SharedPlanV1 | null {
     try {
         if (!encoded) return null;
-
         const json = decompressFromEncodedURIComponent(encoded);
         if (!json) return null;
 
         const obj = JSON.parse(json);
-
-        if (isSharedScheduleV1(obj)) {
+        if (isSharedPlanV1(obj)) {
             return obj;
         }
-
-        console.warn('Snapshot decodificado tiene estructura inválida o versión no soportada:', obj);
-        return null;
-    } catch (err) {
-        console.error('Error al decodificar snapshot compartido:', err);
+        return null; // O lanzar error si preferimos
+    } catch (e) {
+        console.error("Error decoding shared plan", e);
         return null;
     }
 }

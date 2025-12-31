@@ -16,9 +16,9 @@ class PlanificadorDatabase extends Dexie {
     constructor() {
         super('PlanificadorHorariosUC');
 
-        this.version(1).stores({
-            // Indexar ramos por sigla (clave primaria)
-            ramos: 'sigla, nombre',
+        this.version(2).stores({
+            // Indexar ramos por sigla y semestre (clave compuesta para unicidad por semestre)
+            ramos: '[sigla+semestre], sigla, semestre, nombre',
             // Configuración única de usuario
             config: 'id',
         });
@@ -37,6 +37,26 @@ export async function initDatabase(): Promise<void> {
         console.log('Base de datos inicializada correctamente');
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
+
+        // Recuperación ante error de esquema (cambio de PK no soportado automáticamente)
+        // Dexie lanza 'SchemaError' o 'VersionError' dependiendo del caso, o un mensaje específico
+        const err = error as any;
+        if (err.name === 'SchemaError' ||
+            err.name === 'VersionError' ||
+            err.message?.includes('changing primary key') ||
+            err.message?.includes('Incompatible')) {
+            console.warn('Detectado cambio incompatible de esquema. Reiniciando base de datos...');
+            try {
+                await db.delete();
+                await db.open();
+                console.log('Base de datos reiniciada correctamente tras error de esquema.');
+                return;
+            } catch (retryError) {
+                console.error('Error fatal al intentar reiniciar la BD:', retryError);
+                throw retryError;
+            }
+        }
+
         throw error;
     }
 }

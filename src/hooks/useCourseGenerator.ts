@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { Ramo } from '../types';
-import { buscarCursos } from '../services';
+import { buscarCursos, buscarMultiplesCursos } from '../services';
 
 export interface FetchProgress {
     current: number;
@@ -29,7 +29,7 @@ export interface UseCourseGeneratorReturn {
 
 /**
  * Hook para manejar la carga de cursos desde la API
- * Usa Promise.allSettled para manejar errores individuales sin fallar todo
+ * Usa el endpoint batch para múltiples siglas (optimizado)
  */
 export function useCourseGenerator(): UseCourseGeneratorReturn {
     const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +40,7 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
 
     /**
      * Busca cursos para múltiples siglas y los ACUMULA con los existentes
-     * Reporta errores por sigla individual sin fallar el proceso completo
+     * Usa endpoint batch optimizado cuando hay 2+ siglas
      */
     const fetchAllCourses = useCallback(async (siglas: string[], semestre?: string) => {
         // Limpiar y validar siglas
@@ -56,29 +56,66 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
         // Iniciar carga (NO borramos cursosAPI existentes)
         setIsLoading(true);
         setError(null);
-        // Mantener errores anteriores y agregar nuevos
-        const erroresNuevos: Record<string, string> = {};
 
         try {
             const nuevosRamos: Ramo[] = [];
+            const erroresNuevos: Record<string, string> = {};
 
-            // Procesar siglas secuencialmente para mostrar progreso
-            for (let i = 0; i < siglasLimpias.length; i++) {
-                const sigla = siglasLimpias[i];
+            // Usar endpoint batch si hay 2+ siglas (optimizado en servidor)
+            if (siglasLimpias.length >= 2) {
+                setLoadingProgress({
+                    current: 0,
+                    total: siglasLimpias.length,
+                    currentSigla: 'Cargando cursos...',
+                });
+
+                const resultado = await buscarMultiplesCursos(siglasLimpias, semestre);
+
+                if (resultado.success) {
+                    // Extraer ramos del Map
+                    for (const [, ramos] of resultado.resultados) {
+                        nuevosRamos.push(...ramos);
+                    }
+                    // Copiar errores individuales
+                    Object.assign(erroresNuevos, resultado.erroresPorSigla);
+                } else {
+                    // Fallback: endpoint batch falló, intentar individual
+                    console.warn('[useCourseGenerator] Batch endpoint failed, falling back to sequential');
+                    for (let i = 0; i < siglasLimpias.length; i++) {
+                        const sigla = siglasLimpias[i];
+                        setLoadingProgress({
+                            current: i + 1,
+                            total: siglasLimpias.length,
+                            currentSigla: sigla,
+                        });
+
+                        const res = await buscarCursos(sigla, semestre);
+                        if (res.success) {
+                            nuevosRamos.push(...res.ramos);
+                        } else {
+                            erroresNuevos[sigla] = res.message;
+                        }
+                    }
+                }
 
                 setLoadingProgress({
-                    current: i + 1,
+                    current: siglasLimpias.length,
                     total: siglasLimpias.length,
+                    currentSigla: 'Completado',
+                });
+            } else {
+                // Una sola sigla: usar endpoint individual
+                const sigla = siglasLimpias[0];
+                setLoadingProgress({
+                    current: 1,
+                    total: 1,
                     currentSigla: sigla,
                 });
 
                 const resultado = await buscarCursos(sigla, semestre);
 
                 if (resultado.success) {
-                    // Agregar ramos encontrados
-                    for (const ramo of resultado.ramos) {
-                        nuevosRamos.push(ramo);
-                    }
+                    nuevosRamos.push(...resultado.ramos);
                 } else {
                     erroresNuevos[sigla] = resultado.message;
                 }

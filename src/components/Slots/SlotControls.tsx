@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScheduleSnapshot, getSlotLabel, getSlotSummary } from '../../domain/snapshots';
+import { ScheduleSnapshot, getSlotLabel } from '../../domain/snapshots';
 import { SlotId } from '../../hooks/useSlots';
 
 interface SlotControlsProps {
@@ -8,6 +8,7 @@ interface SlotControlsProps {
     onSlotChange: (slot: SlotId) => void;
     onSave: () => void;
     onLoad: () => void;
+    onDeleteSlot: (slot: SlotId) => void;
     isCurrentSlotEmpty: boolean;
 }
 
@@ -17,6 +18,7 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
     onSlotChange,
     onSave,
     onLoad,
+    onDeleteSlot,
     isCurrentSlotEmpty
 }) => {
     // Array para iterar opciones
@@ -40,7 +42,6 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
                                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
                                     }
                                 `}
-                                title={hasData ? `${getSlotLabel(slots[slot], slot)} (${getSlotSummary(slots[slot])})` : `Slot ${slot}: Vacío`}
                             >
                                 {slot}
                                 {hasData && !isActive && (
@@ -48,10 +49,29 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
                                 )}
                             </button>
 
-                            {/* Tooltip simple */}
-                            <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 min-w-max hidden group-hover:block z-50">
-                                <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap">
-                                    {hasData ? getSlotLabel(slots[slot], slot) : 'Vacío'}
+                            {/* Tooltip simple - Modificado con pb para bridge y z-index alto */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 hidden group-hover:block z-[100] pt-2 w-max">
+                                {/* Invisible bridge area handled by pt-2 */}
+                                <div className="bg-gray-800 text-white text-xs rounded shadow-xl whitespace-nowrap overflow-hidden border border-gray-700">
+                                    <div className="px-2 py-1.5 border-b border-gray-700 font-medium bg-gray-900/50">
+                                        {hasData ? getSlotLabel(slots[slot], slot) : `Slot ${slot}: Vacío`}
+                                    </div>
+                                    {hasData ? (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteSlot(slot);
+                                            }}
+                                            className="w-full text-left px-2 py-1.5 text-red-300 hover:text-red-200 hover:bg-white/10 transition-colors flex items-center gap-2"
+                                        >
+                                            <span className="text-sm">🗑️</span>
+                                            <span className="font-medium">Eliminar</span>
+                                        </button>
+                                    ) : (
+                                        <div className="px-2 py-1.5 text-gray-400 italic">
+                                            Sin datos guardados
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

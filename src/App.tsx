@@ -7,14 +7,14 @@ import { Ramo, SeccionConMask } from './types';
 import { prepararRamo } from './core/bitmask';
 import {
     initDatabase,
-    obtenerTodosRamos,
+    obtenerRamosPorSemestre,
     agregarRamo,
     actualizarRamo,
     obtenerConfig,
     actualizarSeccionesSeleccionadas,
     descargarDatos,
     subirDatos,
-    limpiarTodosRamos,
+    limpiarRamosSemestre,
     eliminarRamo,
 } from './db';
 import {
@@ -26,9 +26,10 @@ import {
     CompareView,
     ShareButton
 } from './components';
-import { decodeSharedSnapshot } from './domain/share';
+import { decodeShared } from './domain/share';
+import { reconstructSchedule } from './domain/reconstruction';
 import { useSlots } from './hooks/useSlots';
-import { checkHealth, obtenerVacantes } from './services';
+import { checkHealth, obtenerVacantes, SEMESTRE_ACTUAL } from './services';
 import { exportarHorarioExcel } from './utils/excelExport';
 
 type Tab = 'planner' | 'generator' | 'compare';
@@ -37,10 +38,12 @@ function App() {
     // Estado de datos
     const [ramos, setRamos] = useState<Ramo[]>([]);
     const [seccionesSeleccionadasIds, setSeccionesSeleccionadasIds] = useState<Set<string>>(new Set());
+    const [currentSemester, setCurrentSemester] = useState(SEMESTRE_ACTUAL);
     const [previewSecciones, setPreviewSecciones] = useState<SeccionConMask[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [dbInitialized, setDbInitialized] = useState(false);
+    const [importingStatus, setImportingStatus] = useState<{ loading: boolean; message: string }>({ loading: false, message: '' });
 
     // Estado de UI
     const [tab, setTab] = useState<Tab>('planner');
@@ -49,7 +52,7 @@ function App() {
     const [searchRequest, setSearchRequest] = useState<{ term: string; timestamp: number } | null>(null);
 
     // Slots hook
-    const { activeSlot, slots, saveSlot, loadSlot, setActiveSlot } = useSlots();
+    const { activeSlot, slots, saveSlot, loadSlot, setActiveSlot, clearSlot } = useSlots();
 
 
     // Ref para medir la altura del grid
@@ -60,19 +63,34 @@ function App() {
         checkHealth();
     }, []);
 
-    // Cargar datos iniciales
+    // Cargar datos iniciales y reaccionar a cambios de semestre
     useEffect(() => {
         const init = async () => {
+            setLoading(true);
+            setRamos([]); // Limpiar ramos al cambiar de semestre
+            setSeccionesSeleccionadasIds(new Set()); // Limpiar selección al cambiar de semestre
             try {
-                await initDatabase();
-                const ramosData = await obtenerTodosRamos();
+                if (!dbInitialized) {
+                    await initDatabase();
+                    setDbInitialized(true);
+                }
+
+                // Cargar ramos del semestre actual
+                console.log(`[App] Cargando datos para semestre: ${currentSemester}`);
+                const ramosData = await obtenerRamosPorSemestre(currentSemester);
+                console.log(`[App] Ramos cargados: ${ramosData.length}`);
                 setRamos(ramosData);
 
+                // Cargar selección del semestre actual
                 const config = await obtenerConfig();
-                if (config?.seccionesSeleccionadas) {
+                if (config?.seccionesPorSemestre && config.seccionesPorSemestre[currentSemester]) {
+                    setSeccionesSeleccionadasIds(new Set(config.seccionesPorSemestre[currentSemester]));
+                } else if (currentSemester === '2026-1' && config?.seccionesSeleccionadas) {
+                    // Migración legacy para el semestre por defecto
                     setSeccionesSeleccionadasIds(new Set(config.seccionesSeleccionadas));
+                } else {
+                    setSeccionesSeleccionadasIds(new Set());
                 }
-                setDbInitialized(true);
             } catch (err) {
                 setError('Error al cargar la base de datos: ' + (err as Error).message);
             } finally {
@@ -80,77 +98,89 @@ function App() {
             }
         };
         init();
-
-    }, []);
+    }, [currentSemester, dbInitialized]);
 
     // PROCESAR LINK COMPARTIDO (Hash)
     useEffect(() => {
-        const handleHash = () => {
+        const handleHash = async () => {
             const hash = window.location.hash;
             if (hash.startsWith('#s=')) {
                 try {
-                    const encoded = hash.substring(3); // remover #s=
-                    const snapshot = decodeSharedSnapshot(encoded);
+                    const encoded = hash.substring(3);
+                    const snapshot = decodeShared(encoded);
 
                     if (snapshot) {
-                        // Confirmar si el usuario ya tiene datos que no quiere perder
-                        // Solo preguntar si ya hay ramos cargados para no ser molesto en primera carga limpia
+                        // Confirmar carga
                         const shouldLoad = ramos.length === 0 || confirm('Se ha detectado un horario compartido en el link. ¿Deseas cargarlo? Se reemplazará tu selección actual.');
 
                         if (shouldLoad) {
-                            // 1. Cargar ramos del snapshot (uniendo con existentes por seguridad, pero priorizando snapshot)
-                            const ramosMap = new Map();
-                            // Estrategia: Preservamos los ramos actuales y agregamos/sobreescribimos con los del snapshot
-                            ramos.forEach(r => ramosMap.set(r.sigla, r));
-                            snapshot.ramos.forEach(r => ramosMap.set(r.sigla, r));
+                            setImportingStatus({ loading: true, message: 'Iniciando carga de horario compartido...' });
 
-                            const nuevosRamos = Array.from(ramosMap.values());
-                            setRamos(nuevosRamos);
-
-                            // 2. Aplicar selección
-                            setSeccionesSeleccionadasIds(new Set(snapshot.selectedIds));
-                            setTab('planner');
-
-                            // 3. Feedback visual (opcional: limpiar hash o dejarlo)
-                            // Estrategia: Dejarlo permite copiar el link directo del nav bar de nuevo,
-                            // pero puede ser molesto si recargas.
-                            // Por ahora lo dejamos para cumplir "ser compartible".
-
-                            // Prefetch vacantes para lo nuevo
-                            snapshot.ramos.forEach(r => {
-                                r.secciones.forEach(s => {
-                                    if (snapshot.selectedIds.includes(s.id) && s.nrc) {
-                                        obtenerVacantes(s.nrc).catch(() => { });
-                                    }
-                                });
+                            // Reconstruir desde API
+                            const result = await reconstructSchedule(snapshot, (msg) => {
+                                setImportingStatus(prev => ({ ...prev, message: msg }));
                             });
 
-                            // Notificar éxito discreto (podría ser un toast, por ahora solo log)
-                            console.log('Horario compartido cargado exitosamente');
+                            // Aplicar cambios
+                            setRamos(prev => {
+                                // Combinar estrategicamente: mantener lo que ya estaba y agregar lo nuevo?
+                                // O reemplazar totalmente?
+                                // El usuario aceptó "reemplazar selección", pero quizás quiera mantener sus otros ramos en "mis ramos".
+                                // Vamos a fusionar los ramos cargados con los existentes por si acaso.
+                                const map = new Map(prev.map(r => [r.sigla, r]));
+                                result.ramos.forEach(r => map.set(r.sigla, r));
+                                return Array.from(map.values());
+                            });
+
+                            setCurrentSemester(snapshot.sem);
+                            setSeccionesSeleccionadasIds(new Set(result.selectedIds));
+                            setTab('planner'); // Ir al planner para ver el resultado
+
+                            // Manejo de errores parciales
+                            if (result.errors.length > 0) {
+                                console.warn('Errores al importar:', result.errors);
+                                alert(`Horario cargado con advertencias:\n- ${result.errors.join('\n- ')}`);
+                            } else {
+                                console.log('Horario reconstruido exitosamente');
+                            }
+
+                            // Vacantes prefetch para lo seleccionado
+                            result.selectedIds.forEach(id => {
+                                // Encontrar NRC
+                                const ramo = result.ramos.find(r => r.secciones.some(s => s.id === id));
+                                const seccion = ramo?.secciones.find(s => s.id === id);
+                                if (seccion?.nrc) {
+                                    obtenerVacantes(seccion.nrc).catch(() => { });
+                                }
+                            });
+
                         }
                     } else {
-                        console.warn('El link compartido es inválido o está dañado.');
-                        // Opcional: mostrar un toast de error
+                        console.warn('Link inválido.');
                     }
                 } catch (e) {
                     console.error('Error procesando link compartido', e);
+                } finally {
+                    setImportingStatus({ loading: false, message: '' });
+                    // Opcional: limpiar hash para no re-importar al refrescar, 
+                    // pero es útil mantenerlo para copiar.
+                    // Si ya cargamos, el confirm() protege de re-loads accidentales.
                 }
             }
         };
 
-        // Ejecutar solo cuando la DB esté lista para asegurar consistencia
         if (dbInitialized && !loading) {
-            // Pequeño delay para asegurar que el render inicial no interfiera
-            setTimeout(handleHash, 100);
+            // Pequeño delay
+            setTimeout(handleHash, 500);
         }
-    }, [dbInitialized, loading]); // Dependencias mínimas para correr una vez tras carga
+    }, [dbInitialized, loading]); // Dependencias mínimas (run once logic handled inside)
 
     // Guardar secciones seleccionadas cuando cambien
     useEffect(() => {
         if (dbInitialized && !loading) {
-            actualizarSeccionesSeleccionadas(Array.from(seccionesSeleccionadasIds));
+            actualizarSeccionesSeleccionadas(currentSemester, Array.from(seccionesSeleccionadasIds));
         }
-    }, [seccionesSeleccionadasIds, loading, dbInitialized]);
+    }, [seccionesSeleccionadasIds, loading, dbInitialized, currentSemester]);
 
     // Calcular secciones seleccionadas con sus datos completos
     const seccionesSeleccionadas = useMemo(() => {
@@ -187,18 +217,17 @@ function App() {
             let cambio = false;
 
             for (const nuevoRamo of nuevosRamos) {
-                const index = actualizados.findIndex(r => r.sigla === nuevoRamo.sigla);
+                // Asegurar que el ramo tenga el semestre correcto (aunque la API debería darlo, forzamos coherencia)
+                const ramoConSemestre = { ...nuevoRamo, semestre: currentSemester };
+
+                const index = actualizados.findIndex(r => r.sigla === ramoConSemestre.sigla);
                 if (index >= 0) {
-                    // Actualizar existente si es diferente?
-                    // Por simplicidad, asumimos que la API manda la info más reciente
-                    // y actualizamos siempre
-                    actualizados[index] = nuevoRamo;
-                    await actualizarRamo(nuevoRamo);
+                    actualizados[index] = ramoConSemestre;
+                    await actualizarRamo(ramoConSemestre);
                     cambio = true;
                 } else {
-                    // Agregar nuevo
-                    actualizados.push(nuevoRamo);
-                    await agregarRamo(nuevoRamo);
+                    actualizados.push(ramoConSemestre);
+                    await agregarRamo(ramoConSemestre);
                     cambio = true;
                 }
             }
@@ -209,7 +238,7 @@ function App() {
         } catch (err) {
             console.error('Error al guardar nuevos ramos:', err);
         }
-    }, [ramos]);
+    }, [ramos, currentSemester]);
 
     const handleToggleSeccion = useCallback((seccion: SeccionConMask) => {
         setSeccionesSeleccionadasIds(prev => {
@@ -265,11 +294,15 @@ function App() {
                 try {
                     await subirDatos(file);
                     // Recargar datos
-                    const ramosData = await obtenerTodosRamos();
+                    const ramosData = await obtenerRamosPorSemestre(currentSemester);
                     setRamos(ramosData);
                     const config = await obtenerConfig();
-                    if (config?.seccionesSeleccionadas) {
+                    if (config?.seccionesPorSemestre && config.seccionesPorSemestre[currentSemester]) {
+                        setSeccionesSeleccionadasIds(new Set(config.seccionesPorSemestre[currentSemester]));
+                    } else if (currentSemester === '2026-1' && config?.seccionesSeleccionadas) {
                         setSeccionesSeleccionadasIds(new Set(config.seccionesSeleccionadas));
+                    } else {
+                        setSeccionesSeleccionadasIds(new Set());
                     }
                     alert('Datos importados correctamente');
                 } catch (err) {
@@ -304,7 +337,7 @@ function App() {
     // Limpiar todos los ramos (del Generador)
     const handleLimpiarRamos = useCallback(async () => {
         try {
-            await limpiarTodosRamos();
+            await limpiarRamosSemestre(currentSemester);
             setRamos([]);
             setSeccionesSeleccionadasIds(new Set());
         } catch (err) {
@@ -316,7 +349,7 @@ function App() {
     const handleEliminarRamos = useCallback(async (siglas: string[]) => {
         try {
             // Eliminar de BD
-            await Promise.all(siglas.map(sigla => eliminarRamo(sigla)));
+            await Promise.all(siglas.map(sigla => eliminarRamo(sigla, currentSemester)));
 
             // Actualizar estado local
             setRamos(prev => prev.filter(r => !siglas.includes(r.sigla)));
@@ -375,6 +408,13 @@ function App() {
         }
     }, [activeSlot, loadSlot, ramos]);
 
+    const handleDeleteSlot = useCallback((slotId: 'A' | 'B' | 'C') => {
+        const snapshot = loadSlot(slotId);
+        if (snapshot && confirm(`¿Estás seguro de que quieres eliminar el horario guardado en "${snapshot.name}"?`)) {
+            clearSlot(slotId);
+        }
+    }, [clearSlot, loadSlot]);
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -407,7 +447,7 @@ function App() {
     return (
         <div className="h-screen flex flex-col overflow-hidden">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2 shadow-sm">
+            <header className="relative z-[100] bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2 shadow-sm">
                 <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                     {/* Botón hamburguesa para móvil */}
                     <button
@@ -469,13 +509,14 @@ function App() {
                         onSlotChange={setActiveSlot}
                         onSave={handleSaveSlot}
                         onLoad={handleLoadSlot}
+                        onDeleteSlot={handleDeleteSlot}
                         isCurrentSlotEmpty={!slots[activeSlot]}
                     />
                 </div>
 
                 {/* Botones de Import/Export */}
                 <div className="flex gap-1 md:gap-2 flex-shrink-0 items-center">
-                    <ShareButton ramos={ramos} selectedIds={seccionesSeleccionadasIds} />
+                    <ShareButton ramos={ramos} selectedIds={seccionesSeleccionadasIds} semestre={currentSemester} />
                     <div className="w-px h-6 bg-gray-200 mx-1 hidden md:block"></div>
                     <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Importar datos desde JSON">
                         <span>📥</span>
@@ -550,6 +591,8 @@ function App() {
                             onToggleSeccion={handleToggleSeccion}
                             onNuevosRamos={handleNuevosRamos}
                             externalSearchRequest={searchRequest}
+                            semestre={currentSemester}
+                            onSemestreChange={setCurrentSemester}
                         />
                     </div>
 
@@ -624,6 +667,8 @@ function App() {
                         onLimpiarRamos={handleLimpiarRamos}
                         onEliminarRamos={handleEliminarRamos}
                         onAplicarResultado={handleAplicarResultado}
+                        semestre={currentSemester}
+                        onSemestreChange={setCurrentSemester}
                     />
                 </div>
 
@@ -647,7 +692,19 @@ function App() {
                     />
                 </div>
             </main>
-        </div>
+
+            {/* Loading Overlay for Share Import */}
+            {
+                importingStatus.loading && (
+                    <div className="fixed bottom-4 right-4 z-50 animate-fade-in-up">
+                        <div className="bg-gray-900/90 text-white px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm flex items-center gap-3 border border-gray-700/50">
+                            <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-sm font-medium">{importingStatus.message}</span>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 

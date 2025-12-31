@@ -10,6 +10,6 @@
 import initialData from './initialData.json';
 import { DatosExportados } from '../types';
 
-export const datosIniciales: DatosExportados = initialData as DatosExportados;
+export const datosIniciales: DatosExportados = initialData as unknown as DatosExportados;
 
 export default datosIniciales;
