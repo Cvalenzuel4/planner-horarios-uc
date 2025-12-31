@@ -37,12 +37,14 @@ interface ScheduleGridProps {
     seccionesSeleccionadas: SeccionConMask[];
     onBloqueClick?: (dia: Dia, modulo: Modulo, secciones: SeccionConMask[]) => void;
     previewSecciones?: SeccionConMask[];
+    compact?: boolean;
 }
 
 export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     seccionesSeleccionadas,
     onBloqueClick,
     previewSecciones = [],
+    compact = false,
 }) => {
     // Estado para el modal de conflictos
     const [conflictModal, setConflictModal] = useState<ConflictModalState>({
@@ -160,9 +162,9 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     className={`schedule-block ${colores.bg} ${colores.text} ${colores.border} border-2`}
                     title={`${seccion.ramoNombre} - Sección ${seccion.numero}\n${NOMBRES_ACTIVIDAD[tipo]}\nClick para más info`}
                 >
-                    <span className="font-bold truncate max-w-full px-1">{seccion.ramoSigla}</span>
-                    <span className="text-[10px] opacity-80">S{seccion.numero}</span>
-                    <span className="text-[9px] opacity-70">{NOMBRES_ACTIVIDAD[tipo]}</span>
+                    <span className={`font-bold truncate max-w-full px-1 ${compact ? 'text-[9px]' : ''}`}>{seccion.ramoSigla}</span>
+                    <span className={`text-[10px] opacity-80 ${compact ? 'text-[8px]' : ''}`}>S{seccion.numero}</span>
+                    <span className={`text-[9px] opacity-70 ${compact ? 'text-[7px]' : ''}`}>{NOMBRES_ACTIVIDAD[tipo]}</span>
                 </div>
             </div>
         );

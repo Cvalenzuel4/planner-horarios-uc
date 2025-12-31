@@ -21,12 +21,17 @@ import {
     ScheduleGrid,
     Generator,
     CourseSearch,
-    SelectedCoursesList
+    SelectedCoursesList,
+    SlotControls,
+    CompareView,
+    ShareButton
 } from './components';
+import { decodeSharedSnapshot } from './domain/share';
+import { useSlots } from './hooks/useSlots';
 import { checkHealth, obtenerVacantes } from './services';
 import { exportarHorarioExcel } from './utils/excelExport';
 
-type Tab = 'planner' | 'generator';
+type Tab = 'planner' | 'generator' | 'compare';
 
 function App() {
     // Estado de datos
@@ -42,6 +47,10 @@ function App() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [gridHeight, setGridHeight] = useState<number | null>(null);
     const [searchRequest, setSearchRequest] = useState<{ term: string; timestamp: number } | null>(null);
+
+    // Slots hook
+    const { activeSlot, slots, saveSlot, loadSlot, setActiveSlot } = useSlots();
+
 
     // Ref para medir la altura del grid
     const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +80,70 @@ function App() {
             }
         };
         init();
+
     }, []);
+
+    // PROCESAR LINK COMPARTIDO (Hash)
+    useEffect(() => {
+        const handleHash = () => {
+            const hash = window.location.hash;
+            if (hash.startsWith('#s=')) {
+                try {
+                    const encoded = hash.substring(3); // remover #s=
+                    const snapshot = decodeSharedSnapshot(encoded);
+
+                    if (snapshot) {
+                        // Confirmar si el usuario ya tiene datos que no quiere perder
+                        // Solo preguntar si ya hay ramos cargados para no ser molesto en primera carga limpia
+                        const shouldLoad = ramos.length === 0 || confirm('Se ha detectado un horario compartido en el link. ¿Deseas cargarlo? Se reemplazará tu selección actual.');
+
+                        if (shouldLoad) {
+                            // 1. Cargar ramos del snapshot (uniendo con existentes por seguridad, pero priorizando snapshot)
+                            const ramosMap = new Map();
+                            // Estrategia: Preservamos los ramos actuales y agregamos/sobreescribimos con los del snapshot
+                            ramos.forEach(r => ramosMap.set(r.sigla, r));
+                            snapshot.ramos.forEach(r => ramosMap.set(r.sigla, r));
+
+                            const nuevosRamos = Array.from(ramosMap.values());
+                            setRamos(nuevosRamos);
+
+                            // 2. Aplicar selección
+                            setSeccionesSeleccionadasIds(new Set(snapshot.selectedIds));
+                            setTab('planner');
+
+                            // 3. Feedback visual (opcional: limpiar hash o dejarlo)
+                            // Estrategia: Dejarlo permite copiar el link directo del nav bar de nuevo,
+                            // pero puede ser molesto si recargas.
+                            // Por ahora lo dejamos para cumplir "ser compartible".
+
+                            // Prefetch vacantes para lo nuevo
+                            snapshot.ramos.forEach(r => {
+                                r.secciones.forEach(s => {
+                                    if (snapshot.selectedIds.includes(s.id) && s.nrc) {
+                                        obtenerVacantes(s.nrc).catch(() => { });
+                                    }
+                                });
+                            });
+
+                            // Notificar éxito discreto (podría ser un toast, por ahora solo log)
+                            console.log('Horario compartido cargado exitosamente');
+                        }
+                    } else {
+                        console.warn('El link compartido es inválido o está dañado.');
+                        // Opcional: mostrar un toast de error
+                    }
+                } catch (e) {
+                    console.error('Error procesando link compartido', e);
+                }
+            }
+        };
+
+        // Ejecutar solo cuando la DB esté lista para asegurar consistencia
+        if (dbInitialized && !loading) {
+            // Pequeño delay para asegurar que el render inicial no interfiera
+            setTimeout(handleHash, 100);
+        }
+    }, [dbInitialized, loading]); // Dependencias mínimas para correr una vez tras carga
 
     // Guardar secciones seleccionadas cuando cambien
     useEffect(() => {
@@ -265,6 +337,44 @@ function App() {
         }
     }, [ramos]);
 
+    // Slot Handlers
+    const handleSaveSlot = useCallback(() => {
+        const name = prompt(`Nombre para la Opción ${activeSlot}:`, `Opción ${activeSlot}`);
+        if (name !== null) {
+            // Guardamos todos los ramos actuales para poder restaurar el contexto completo,
+            // no solo los IDs seleccionados.
+            const ids = Array.from(seccionesSeleccionadasIds);
+            saveSlot(activeSlot, name || `Opción ${activeSlot}`, ids, ramos);
+        }
+    }, [activeSlot, ramos, seccionesSeleccionadasIds, saveSlot]);
+
+    const handleLoadSlot = useCallback(() => {
+        const snapshot = loadSlot(activeSlot);
+        if (snapshot) {
+            if (confirm(`¿Cargar "${snapshot.name}"? Esto reemplazará tu selección actual.`)) {
+                // 1. Restaurar ramos (fusionando con los actuales para no perder otros datos si fuera deseado, 
+                // pero snapshot.ramos manda para asegurar consistencia visual con lo guardado)
+                // Usamos un Map para unir inteligentemente si quisiéramos, pero por ahora reemplazamos
+                // o fusionamos. Estrategia segura: Agregar los del snapshot a los existentes.
+
+                const ramosMap = new Map(ramos.map(r => [r.sigla, r]));
+                snapshot.ramos.forEach(r => ramosMap.set(r.sigla, r));
+                const nuevosRamos = Array.from(ramosMap.values());
+
+                setRamos(nuevosRamos);
+
+                // 2. Restaurar selección
+                setSeccionesSeleccionadasIds(new Set(snapshot.seccionesSeleccionadasIds));
+
+                // 3. Resetear preview
+                setPreviewSecciones([]);
+
+                // 4. Prefetch vacantes para lo cargado
+                // (Opcional: implementar si se desea pre-fetching aquí)
+            }
+        }
+    }, [activeSlot, loadSlot, ramos]);
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -339,24 +449,45 @@ function App() {
                         >
                             🔄 <span className="hidden lg:inline">Generador</span>
                         </button>
+                        <button
+                            onClick={() => { setTab('compare'); setSidebarOpen(false); }}
+                            className={`px-3 lg:px-4 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${tab === 'compare'
+                                ? 'bg-gray-100 text-gray-900'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                }`}
+                        >
+                            ⚖️ <span className="hidden lg:inline">Comparar</span>
+                        </button>
                     </nav>
                 </div>
 
+                {/* Slots Controls */}
+                <div className="hidden xl:block mr-4">
+                    <SlotControls
+                        activeSlot={activeSlot}
+                        slots={slots}
+                        onSlotChange={setActiveSlot}
+                        onSave={handleSaveSlot}
+                        onLoad={handleLoadSlot}
+                        isCurrentSlotEmpty={!slots[activeSlot]}
+                    />
+                </div>
+
                 {/* Botones de Import/Export */}
-                <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-2 md:px-4" title="Importar datos desde JSON">
-                        <span className="hidden sm:inline">📥 Importar</span>
-                        <span className="sm:hidden">📥</span>
+                <div className="flex gap-1 md:gap-2 flex-shrink-0 items-center">
+                    <ShareButton ramos={ramos} selectedIds={seccionesSeleccionadasIds} />
+                    <div className="w-px h-6 bg-gray-200 mx-1 hidden md:block"></div>
+                    <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Importar datos desde JSON">
+                        <span>📥</span>
                     </button>
-                    <button onClick={handleExportarJSON} className="btn-secondary text-xs md:text-sm px-2 md:px-4" title="Exportar todos los datos a JSON">
-                        <span className="hidden lg:inline">💾 JSON</span>
-                        <span className="lg:hidden">💾</span>
+                    <button onClick={handleExportarJSON} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Exportar todos los datos a JSON">
+                        <span>💾</span>
                     </button>
-                    <button onClick={handleExportarExcel} className="btn-secondary text-xs md:text-sm px-2 md:px-4" title="Exportar horario visual a Excel">
-                        <span className="hidden lg:inline">📄 Excel</span>
-                        <span className="lg:hidden">📄</span>
+                    <button onClick={handleExportarExcel} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Exportar horario visual a Excel">
+                        <span>📄</span>
                     </button>
                 </div>
+
             </header>
 
             {/* Tabs móviles - visibles solo en pantallas pequeñas */}
@@ -370,6 +501,7 @@ function App() {
                 >
                     📋 Planificador
                 </button>
+
                 <button
                     onClick={() => { setTab('generator'); setSidebarOpen(false); }}
                     className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'generator'
@@ -378,6 +510,15 @@ function App() {
                         }`}
                 >
                     🔄 Generador
+                </button>
+                <button
+                    onClick={() => { setTab('compare'); setSidebarOpen(false); }}
+                    className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'compare'
+                        ? 'bg-gray-100 text-gray-900'
+                        : 'text-gray-500'
+                        }`}
+                >
+                    ⚖️ Comparar
                 </button>
             </div>
 
@@ -483,6 +624,26 @@ function App() {
                         onLimpiarRamos={handleLimpiarRamos}
                         onEliminarRamos={handleEliminarRamos}
                         onAplicarResultado={handleAplicarResultado}
+                    />
+                </div>
+
+                {/* COMPARE TAB */}
+                <div className={`w-full h-full ${tab === 'compare' ? 'block' : 'hidden'}`}>
+                    <CompareView
+                        slots={slots}
+                        activeSlot={activeSlot}
+                        onLoadSlot={(slot) => {
+                            const snapshot = slots[slot];
+                            if (snapshot && confirm(`¿Cargar "${snapshot.name}"?`)) {
+                                const ramosMap = new Map(ramos.map(r => [r.sigla, r]));
+                                snapshot.ramos.forEach(r => ramosMap.set(r.sigla, r));
+                                setRamos(Array.from(ramosMap.values()));
+                                setActiveSlot(slot);
+                                setSeccionesSeleccionadasIds(new Set(snapshot.seccionesSeleccionadasIds));
+                                setPreviewSecciones([]);
+                                setTab('planner');
+                            }
+                        }}
                     />
                 </div>
             </main>
