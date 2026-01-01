@@ -5,8 +5,9 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { Ramo, SeccionConMask, ResultadoGeneracion, PermisosTopeMap } from '../../types';
-import { generarHorarios, obtenerInfoCombinacion } from '../../core/scheduler';
+import { generarHorarios, obtenerInfoCombinacion, TopPairResult } from '../../core';
 import { ConflictConfigModal } from './ConflictConfigModal';
+import { NoResultsDiagnosticModal } from './NoResultsDiagnosticModal';
 import { useCourseGenerator } from '../../hooks';
 import { ScheduleGrid } from '../Grid';
 
@@ -63,6 +64,10 @@ export const Generator: React.FC<GeneratorProps> = ({
     const [generando, setGenerando] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [tiempoGeneracion, setTiempoGeneracion] = useState<number>(0);
+
+    // ---------- Estados de diagnóstico de conflictos ----------
+    const [conflictDiagnostic, setConflictDiagnostic] = useState<TopPairResult[] | null>(null);
+    const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
 
     // ---------- Combinar ramos locales con los de la API ----------
     const ramos = useMemo(() => {
@@ -189,19 +194,25 @@ export const Generator: React.FC<GeneratorProps> = ({
         setError(null);
         setResultados([]);
         setActiveIndex(0);
-        setTiempoGeneracion(0); // Reset unused var or keep for debug? I'll use it in console or UI.
+        setTiempoGeneracion(0);
+        setConflictDiagnostic(null);
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
         const inicio = performance.now();
 
         try {
-            const results = generarHorarios(ramosParaGenerar, 500, seccionesFiltradas, permisosTope);
+            const { resultados: results, conflictDiagnostic: diagnostic } = generarHorarios(
+                ramosParaGenerar, 500, seccionesFiltradas, permisosTope
+            );
             const fin = performance.now();
             setTiempoGeneracion(fin - inicio);
 
             if (results.length === 0) {
-                setError('No se encontraron combinaciones válidas (todos los horarios tienen conflictos)');
+                setError('No se encontraron combinaciones válidas');
+                if (diagnostic && diagnostic.length > 0) {
+                    setConflictDiagnostic(diagnostic);
+                }
             } else {
                 setResultados(results);
                 setActiveIndex(0);
@@ -500,12 +511,32 @@ export const Generator: React.FC<GeneratorProps> = ({
             <div className="flex-1 flex flex-col h-full bg-slate-50 min-w-0">
                 <div className="flex-1 overflow-hidden relative flex flex-col">
                     {resultados.length === 0 ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-300 p-8 select-none">
-                            <div className="text-8xl mb-4 grayscale opacity-20">📅</div>
-                            <h3 className="text-xl font-medium text-gray-400">Generador de Horarios</h3>
-                            <p className="text-sm mt-2 max-w-sm text-center text-gray-400">
-                                Busca ramos en la API, selecciona tus preferencias en el panel izquierdo y presiona "Generar".
-                            </p>
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 select-none">
+                            {error && conflictDiagnostic && conflictDiagnostic.length > 0 ? (
+                                /* Error state with diagnostic available */
+                                <>
+                                    <div className="text-5xl mb-4">❌</div>
+                                    <h3 className="text-lg font-medium text-gray-600">No hay combinaciones posibles</h3>
+                                    <p className="text-sm mt-2 text-gray-400 max-w-sm text-center">
+                                        Con las restricciones actuales no se encontró ningún horario sin conflictos.
+                                    </p>
+                                    <button
+                                        onClick={() => setShowDiagnosticModal(true)}
+                                        className="mt-4 text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium flex items-center gap-1"
+                                    >
+                                        <span>📊</span> Ver detalle de conflictos
+                                    </button>
+                                </>
+                            ) : (
+                                /* Normal empty state */
+                                <>
+                                    <div className="text-8xl mb-4 grayscale opacity-20">📅</div>
+                                    <h3 className="text-xl font-medium text-gray-400">Generador de Horarios</h3>
+                                    <p className="text-sm mt-2 max-w-sm text-center text-gray-400">
+                                        Busca ramos en la API, selecciona tus preferencias en el panel izquierdo y presiona "Generar".
+                                    </p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <>
@@ -567,13 +598,22 @@ export const Generator: React.FC<GeneratorProps> = ({
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modal - Conflict Config */}
             {showConfigModal && (
                 <ConflictConfigModal
                     ramos={ramosParaGenerar}
                     permisosTope={permisosTope}
                     onSave={setPermisosTope}
                     onClose={() => setShowConfigModal(false)}
+                />
+            )}
+
+            {/* Modal - Diagnostic */}
+            {showDiagnosticModal && conflictDiagnostic && (
+                <NoResultsDiagnosticModal
+                    isOpen={showDiagnosticModal}
+                    onClose={() => setShowDiagnosticModal(false)}
+                    topPairs={conflictDiagnostic}
                 />
             )}
         </div>

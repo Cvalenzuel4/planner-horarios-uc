@@ -4,13 +4,35 @@
  * Genera todas las combinaciones válidas de secciones que no tienen conflictos.
  * Usa optimización de poda temprana ordenando ramos por cantidad de secciones.
  * Soporta permisos de tope para permitir conflictos en actividades específicas.
+ * 
+ * When results = 0, provides conflict diagnostics showing the top 3 pairs
+ * of courses causing the most conflicts.
  */
 
 import { Ramo, SeccionConMask, ResultadoGeneracion, PermisosTopeMap, TipoActividad, getPermisoTopeKey } from '../types';
-import { hasConflict, prepararRamo, actividadToMask } from './bitmask';
+import { hasConflict, prepararRamo, actividadToMask, indexToBloque } from './bitmask';
+import {
+    ConflictStats,
+    ConflictHit,
+    TopPairResult,
+    createConflictStats,
+    recordConflict,
+    buildTopPairs,
+    normalizeSectionId,
+} from './conflictStats';
 
 /** Límite máximo de combinaciones a generar */
 const MAX_RESULTADOS = 500;
+
+/**
+ * Extended result type that includes conflict diagnostics when no results found
+ */
+export interface GenerationResult {
+    /** Array of valid schedule combinations */
+    resultados: ResultadoGeneracion[];
+    /** Conflict diagnostics (only present when resultados.length === 0) */
+    conflictDiagnostic?: TopPairResult[];
+}
 
 /**
  * Información de una actividad para verificar conflictos permitidos
@@ -74,6 +96,48 @@ function esConflictoPermitido(
 }
 
 /**
+ * Finds the first conflicting slot between a candidate section and existing sections.
+ * Returns ConflictHit with details about which sections conflict and where.
+ * 
+ * @param candidateSeccion The section being tested for addition
+ * @param seccionesActuales The sections already in the partial schedule
+ * @returns ConflictHit if conflict found, null otherwise
+ */
+function findFirstConflict(
+    candidateSeccion: SeccionConMask,
+    seccionesActuales: SeccionConMask[]
+): ConflictHit | null {
+    const candidateMask = candidateSeccion.mask;
+
+    for (const existingSeccion of seccionesActuales) {
+        const conflictMask = candidateMask & existingSeccion.mask;
+        if (conflictMask !== BigInt(0)) {
+            // Find the first conflicting bit (lowest set bit)
+            let temp = conflictMask;
+            let bitIndex = 0;
+            while ((temp & BigInt(1)) === BigInt(0)) {
+                temp >>= BigInt(1);
+                bitIndex++;
+            }
+
+            // Convert bit index to day/module
+            const bloque = indexToBloque(bitIndex);
+
+            return {
+                siglaCandidate: candidateSeccion.ramoSigla,
+                sectionCandidateNorm: normalizeSectionId(candidateSeccion.id),
+                siglaExisting: existingSeccion.ramoSigla,
+                sectionExistingNorm: normalizeSectionId(existingSeccion.id),
+                day: bloque.dia,
+                module: bloque.modulo,
+            };
+        }
+    }
+
+    return null;
+}
+
+/**
  * Verifica si una sección puede agregarse considerando permisos de tope
  */
 function puedeAgregarSeccion(
@@ -124,16 +188,16 @@ function puedeAgregarSeccion(
  * @param maxResultados Límite de resultados (default: 500)
  * @param filtroSecciones Mapa opcional de sigla ramo → set de IDs de secciones permitidas
  * @param permisosTope Mapa opcional de permisos de tope por actividad
- * @returns Array de combinaciones válidas
+ * @returns GenerationResult with combinations and optional conflict diagnostics
  */
 export function generarHorarios(
     ramos: Ramo[],
     maxResultados: number = MAX_RESULTADOS,
     filtroSecciones?: Map<string, Set<string>>,
     permisosTope?: PermisosTopeMap
-): ResultadoGeneracion[] {
+): GenerationResult {
     if (ramos.length === 0) {
-        return [];
+        return { resultados: [] };
     }
 
     // Preparar secciones con máscaras precalculadas, aplicando filtro si existe
@@ -156,7 +220,7 @@ export function generarHorarios(
     const ramosConSecciones = ramosSecciones.filter(secciones => secciones.length > 0);
 
     if (ramosConSecciones.length === 0) {
-        return [];
+        return { resultados: [] };
     }
 
     // Ordenar por cantidad de secciones (menos secciones primero = poda temprana)
@@ -166,15 +230,28 @@ export function generarHorarios(
 
     const ramosOrdenados = indices.map(i => ramosConSecciones[i]);
 
+    // Create conflict stats for instrumentation
+    const conflictStats = createConflictStats();
+
     // Ejecutar backtracking
     const resultados: ResultadoGeneracion[] = [];
-    backtrack(ramosOrdenados, 0, [], resultados, maxResultados, permisosTope);
+    backtrack(ramosOrdenados, 0, [], resultados, maxResultados, permisosTope, false, conflictStats);
 
-    return resultados;
+    // If no results, provide conflict diagnostics
+    if (resultados.length === 0 && conflictStats.totalConflictEvents > 0) {
+        return {
+            resultados: [],
+            conflictDiagnostic: buildTopPairs(conflictStats),
+        };
+    }
+
+    return { resultados };
 }
+
 
 /**
  * Función recursiva de backtracking
+ * Records conflict events when sections are discarded for diagnostic purposes.
  */
 function backtrack(
     ramos: SeccionConMask[][],
@@ -183,7 +260,8 @@ function backtrack(
     resultados: ResultadoGeneracion[],
     maxResultados: number,
     permisosTope?: PermisosTopeMap,
-    tieneConflictosPermitidos: boolean = false
+    tieneConflictosPermitidos: boolean = false,
+    conflictStats?: ConflictStats
 ): void {
     // Condición de parada: límite alcanzado
     if (resultados.length >= maxResultados) {
@@ -226,7 +304,8 @@ function backtrack(
                 resultados,
                 maxResultados,
                 permisosTope,
-                tieneConflictosPermitidos || tieneConflictos
+                tieneConflictosPermitidos || tieneConflictos,
+                conflictStats
             );
             solucionActual.pop();
 
@@ -234,9 +313,16 @@ function backtrack(
             if (resultados.length >= maxResultados) {
                 return;
             }
+        } else if (conflictStats) {
+            // Section was discarded due to conflict - record for diagnostics
+            const hit = findFirstConflict(seccion, solucionActual);
+            if (hit) {
+                recordConflict(conflictStats, hit);
+            }
         }
     }
 }
+
 
 /**
  * Calcula estadísticas de la generación
