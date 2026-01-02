@@ -125,6 +125,6 @@ export function esModuloValido(modulo: number): modulo is Modulo {
 // CONSTANTES DE LA API
 // ============================================================================
 
-export const API_BASE_URL = 'https://buscacursos-uc-api.onrender.com';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://buscacursos-uc-api.onrender.com';
 export const API_TIMEOUT_MS = 90000; // 90 segundos para cold start
-export const SEMESTRE_ACTUAL = '2026-1';
+export const SEMESTRE_ACTUAL = import.meta.env.VITE_SEMESTRE_ACTUAL || '2026-1';
