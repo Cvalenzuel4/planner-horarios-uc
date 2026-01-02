@@ -77,20 +77,41 @@ export function CourseCard({ curso, seccionesSeleccionadasIds, onToggleSeccion }
                 {/* Horarios y Botón */}
                 <div className="flex flex-col gap-3 md:items-end justify-between flex-shrink-0">
                     <div className="flex flex-col gap-1 text-xs sm:text-sm">
-                        {curso.horarios.map((h, i) => (
-                            <div key={i} className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
-                                <span className={`w-2 h-2 rounded-full ${h.tipo === 'CLAS' ? 'bg-catedra' :
-                                    h.tipo === 'AYU' ? 'bg-ayudantia' :
-                                        h.tipo === 'LAB' ? 'bg-laboratorio' :
-                                            h.tipo === 'TAL' ? 'bg-taller' :
-                                                h.tipo === 'TER' ? 'bg-terreno' :
-                                                    h.tipo === 'PRA' ? 'bg-practica' : 'bg-otro'}`} />
-                                <span className="font-medium w-8 text-gray-700">{h.tipo}</span>
-                                <span className="text-gray-600 w-16">{h.dia}</span>
-                                <span className="text-gray-800 font-mono">{h.modulos.join(',')}</span>
-                                {h.sala && <span className="text-gray-400 ml-2">({h.sala})</span>}
-                            </div>
-                        ))}
+                        {/* Ordenar por prioridad: CLAS > AYU > LAB > TAL > TER > PRA > otros */}
+                        {(() => {
+                            const horariosOrdenados = [...curso.horarios].sort((a, b) => {
+                                const prioridad: Record<string, number> = { 'CLAS': 0, 'AYU': 1, 'LAB': 2, 'TAL': 3, 'TER': 4, 'PRA': 5 };
+                                return (prioridad[a.tipo] ?? 99) - (prioridad[b.tipo] ?? 99);
+                            });
+                            const total = horariosOrdenados.length;
+                            const mostrar = total >= 5 ? 3 : total; // Si hay 5+, mostrar solo 3
+                            const restantes = total - mostrar;
+
+                            return (
+                                <>
+                                    {horariosOrdenados.slice(0, mostrar).map((h, i) => (
+                                        <div key={i} className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
+                                            <span className={`w-2 h-2 rounded-full ${h.tipo === 'CLAS' ? 'bg-catedra' :
+                                                h.tipo === 'AYU' ? 'bg-ayudantia' :
+                                                    h.tipo === 'LAB' ? 'bg-laboratorio' :
+                                                        h.tipo === 'TAL' ? 'bg-taller' :
+                                                            h.tipo === 'TER' ? 'bg-terreno' :
+                                                                h.tipo === 'PRA' ? 'bg-practica' : 'bg-otro'}`} />
+                                            <span className="font-medium w-8 text-gray-700">{h.tipo}</span>
+                                            <span className="text-gray-600 w-16">{h.dia}</span>
+                                            <span className="text-gray-800 font-mono">{h.modulos.join(',')}</span>
+                                            {h.sala && <span className="text-gray-400 ml-2">({h.sala})</span>}
+                                        </div>
+                                    ))}
+                                    {restantes > 0 && (
+                                        <div className="flex items-center gap-2 bg-gray-200 px-2 py-1 rounded text-gray-600 font-medium">
+                                            <span className="w-2 h-2 rounded-full bg-gray-400" />
+                                            <span>+{restantes} más</span>
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                         {curso.horarios.length === 0 && (
                             <div className="text-gray-400 italic px-2">Sin horario asignado</div>
                         )}

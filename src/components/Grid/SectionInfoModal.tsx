@@ -158,30 +158,42 @@ export const SectionInfoModal: React.FC<SectionInfoModalProps> = ({
                                         Cargando disponibilidad...
                                     </div>
                                 ) : (
-                                    <table className="w-full text-sm">
-                                        <thead className="bg-gray-100 text-gray-500 font-medium h-2">
-                                            <tr>
-                                                <th className="px-3 py-2 text-left font-normal">Escuela/Reserva</th>
-                                                <th className="px-3 py-2 text-center font-normal">Disp.</th>
-                                                <th className="px-3 py-2 text-center font-normal">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {vacantes.map((v, i) => (
-                                                <tr key={i} className="hover:bg-white/50">
-                                                    <td className="px-3 py-2 text-gray-700">
-                                                        {v.escuela || v.programa || v.concentracion || v.categoria || 'General'}
-                                                    </td>
-                                                    <td className={`px-3 py-2 text-center font-medium ${v.disponibles > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                                        {v.disponibles}
-                                                    </td>
-                                                    <td className="px-3 py-2 text-center text-gray-500">
-                                                        {v.ofrecidas}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                    (() => {
+                                        // Check if any vacancy has periodo_admision
+                                        const hasAdmision = vacantes.some(v => v.periodo_admision && v.periodo_admision.trim() !== '');
+                                        return (
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-100 text-gray-500 font-medium h-2">
+                                                    <tr>
+                                                        <th className="px-3 py-2 text-left font-normal">Escuela/Reserva</th>
+                                                        {hasAdmision && <th className="px-3 py-2 text-center font-normal">Admisión</th>}
+                                                        <th className="px-3 py-2 text-center font-normal">Disp.</th>
+                                                        <th className="px-3 py-2 text-center font-normal">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {vacantes.map((v, i) => (
+                                                        <tr key={i} className="hover:bg-white/50">
+                                                            <td className="px-3 py-2 text-gray-700">
+                                                                {v.escuela || v.programa || v.concentracion || v.categoria || 'General'}
+                                                            </td>
+                                                            {hasAdmision && (
+                                                                <td className="px-3 py-2 text-center text-gray-600">
+                                                                    {v.periodo_admision || '—'}
+                                                                </td>
+                                                            )}
+                                                            <td className={`px-3 py-2 text-center font-medium ${v.disponibles > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                                {v.disponibles}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-center text-gray-500">
+                                                                {v.ofrecidas}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        );
+                                    })()
                                 )}
                             </div>
                         </div>

@@ -45,6 +45,8 @@ export interface VacanteAPI {
     programa: string;
     concentracion: string;
     categoria: string;
+    cohorte?: string;
+    periodo_admision?: string;
     ofrecidas: number;
     ocupadas: number;
     disponibles: number;
