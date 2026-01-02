@@ -25,7 +25,7 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
     const slotOptions: SlotId[] = ['A', 'B', 'C'];
 
     return (
-        <div className="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-lg border border-gray-200 shadow-sm backdrop-blur-sm">
+        <div className="flex items-center gap-2 bg-gray-50/80 dark:bg-gray-800/80 p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm">
             <div className="flex gap-1">
                 {slotOptions.map((slot) => {
                     const hasData = !!slots[slot];
@@ -38,8 +38,8 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
                                 className={`
                                     relative w-8 h-8 flex items-center justify-center rounded-md text-sm font-bold transition-all
                                     ${isActive
-                                        ? 'bg-white text-[#003366] shadow-sm border border-gray-200'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                                        ? 'bg-white dark:bg-gray-700 text-[#003366] dark:text-blue-300 shadow-sm border border-gray-200 dark:border-gray-600'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
                                     }
                                 `}
                             >
@@ -79,12 +79,12 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
                 })}
             </div>
 
-            <div className="w-px h-5 bg-gray-300 mx-1" />
+            <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
 
             <div className="flex gap-1">
                 <button
                     onClick={onSave}
-                    className="p-1.5 text-gray-600 hover:text-[#003366] hover:bg-white rounded-md transition-all active:scale-95"
+                    className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-[#003366] dark:hover:text-blue-300 hover:bg-white dark:hover:bg-gray-700 rounded-md transition-all active:scale-95"
                     title="Guardar en slot actual"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,8 +98,8 @@ export const SlotControls: React.FC<SlotControlsProps> = ({
                     className={`
                         p-1.5 rounded-md transition-all active:scale-95
                         ${isCurrentSlotEmpty
-                            ? 'text-gray-300 cursor-not-allowed'
-                            : 'text-gray-600 hover:text-[#003366] hover:bg-white'
+                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-[#003366] dark:hover:text-blue-300 hover:bg-white dark:hover:bg-gray-700'
                         }
                     `}
                     title="Cargar slot actual"

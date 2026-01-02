@@ -24,7 +24,8 @@ import {
     SelectedCoursesList,
     SlotControls,
     CompareView,
-    ShareButton
+    ShareButton,
+    ThemeToggle,
 } from './components';
 import { decodeShared } from './domain/share';
 import { reconstructSchedule } from './domain/reconstruction';
@@ -417,10 +418,10 @@ function App() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
                 <div className="text-center">
                     <div className="loader mx-auto mb-4" />
-                    <p className="text-gray-500">Cargando...</p>
+                    <p className="text-gray-500 dark:text-gray-400">Cargando...</p>
                 </div>
             </div>
         );
@@ -428,11 +429,11 @@ function App() {
 
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
                 <div className="text-center max-w-md glass-panel p-8">
                     <p className="text-4xl mb-4">⚠️</p>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Error</h1>
-                    <p className="text-gray-600">{error}</p>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Error</h1>
+                    <p className="text-gray-600 dark:text-gray-300">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="btn-primary mt-4"
@@ -445,14 +446,14 @@ function App() {
     }
 
     return (
-        <div className="h-screen flex flex-col overflow-hidden">
+        <div className="h-screen flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
             {/* Header */}
-            <header className="relative z-30 bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2 shadow-sm">
+            <header className="relative z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2 shadow-sm">
                 <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                     {/* Botón hamburguesa para móvil */}
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-700 transition-colors"
+                        className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 transition-colors"
                         aria-label="Toggle menu"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -464,7 +465,7 @@ function App() {
                         </svg>
                     </button>
 
-                    <h1 className="text-lg md:text-2xl font-bold text-[#003366] truncate">
+                    <h1 className="text-lg md:text-2xl font-bold text-[#003366] dark:text-blue-400 truncate flex items-center gap-2">
                         <span className="hidden sm:inline">📅 Planificador de Horarios UC</span>
                         <span className="sm:hidden">📅 Horarios UC</span>
                     </h1>
@@ -474,8 +475,8 @@ function App() {
                         <button
                             onClick={() => { setTab('planner'); setSidebarOpen(false); }}
                             className={`px-3 lg:px-4 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${tab === 'planner'
-                                ? 'bg-gray-100 text-gray-900'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                                 }`}
                         >
                             📋 <span className="hidden lg:inline">Planificador</span>
@@ -483,8 +484,8 @@ function App() {
                         <button
                             onClick={() => { setTab('generator'); setSidebarOpen(false); }}
                             className={`px-3 lg:px-4 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${tab === 'generator'
-                                ? 'bg-gray-100 text-gray-900'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                                 }`}
                         >
                             🔄 <span className="hidden lg:inline">Generador</span>
@@ -492,8 +493,8 @@ function App() {
                         <button
                             onClick={() => { setTab('compare'); setSidebarOpen(false); }}
                             className={`px-3 lg:px-4 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${tab === 'compare'
-                                ? 'bg-gray-100 text-gray-900'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                                 }`}
                         >
                             ⚖️ <span className="hidden lg:inline">Comparar</span>
@@ -514,10 +515,12 @@ function App() {
                     />
                 </div>
 
-                {/* Botones de Import/Export */}
+                {/* Botones de Import/Export + Toggle */}
                 <div className="flex gap-1 md:gap-2 flex-shrink-0 items-center">
+                    <ThemeToggle />
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden md:block"></div>
                     <ShareButton ramos={ramos} selectedIds={seccionesSeleccionadasIds} semestre={currentSemester} />
-                    <div className="w-px h-6 bg-gray-200 mx-1 hidden md:block"></div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden md:block"></div>
                     <button onClick={handleImportar} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Importar datos desde JSON">
                         <span>📥</span>
                     </button>
@@ -532,12 +535,12 @@ function App() {
             </header>
 
             {/* Tabs móviles - visibles solo en pantallas pequeñas */}
-            <div className="md:hidden flex bg-white border-t border-gray-200">
+            <div className="md:hidden flex bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                 <button
                     onClick={() => { setTab('planner'); setSidebarOpen(false); }}
                     className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'planner'
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'text-gray-500'
+                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                        : 'text-gray-500 dark:text-gray-400'
                         }`}
                 >
                     📋 Planificador
@@ -546,8 +549,8 @@ function App() {
                 <button
                     onClick={() => { setTab('generator'); setSidebarOpen(false); }}
                     className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'generator'
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'text-gray-500'
+                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                        : 'text-gray-500 dark:text-gray-400'
                         }`}
                 >
                     🔄 Generador
@@ -555,8 +558,8 @@ function App() {
                 <button
                     onClick={() => { setTab('compare'); setSidebarOpen(false); }}
                     className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${tab === 'compare'
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'text-gray-500'
+                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                        : 'text-gray-500 dark:text-gray-400'
                         }`}
                 >
                     ⚖️ Comparar
@@ -607,41 +610,41 @@ function App() {
 
                         {/* Leyenda - más compacta en móvil */}
                         <div className="mt-3 md:mt-4 flex items-center gap-2 md:gap-4 justify-center flex-wrap">
-                            <span className="text-gray-500 text-xs md:text-sm">Leyenda:</span>
+                            <span className="text-gray-500 dark:text-gray-400 text-xs md:text-sm">Leyenda:</span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-amber-400" />
-                                <span className="text-gray-600">Cátedra</span>
+                                <span className="text-gray-600 dark:text-gray-400">Cátedra</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-sky-400" />
-                                <span className="text-gray-600">Lab</span>
+                                <span className="text-gray-600 dark:text-gray-400">Lab</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-emerald-400" />
-                                <span className="text-gray-600">Ayud</span>
+                                <span className="text-gray-600 dark:text-gray-400">Ayud</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-violet-400" />
-                                <span className="text-gray-600">Taller</span>
+                                <span className="text-gray-600 dark:text-gray-400">Taller</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-orange-500" />
-                                <span className="text-gray-600">Terreno</span>
+                                <span className="text-gray-600 dark:text-gray-400">Terreno</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-400" />
-                                <span className="text-gray-600">Práctica</span>
+                                <span className="text-gray-600 dark:text-gray-400">Práctica</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs md:text-sm">
                                 <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-red-500 animate-pulse" />
-                                <span className="text-gray-600">Conflicto</span>
+                                <span className="text-gray-600 dark:text-gray-400">Conflicto</span>
                             </span>
 
                             {/* Botón limpiar - solo visible si hay secciones seleccionadas */}
                             {seccionesSeleccionadas.length > 0 && (
                                 <button
                                     onClick={handleLimpiarHorario}
-                                    className="ml-2 md:ml-4 px-3 py-1 text-xs md:text-sm bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-all flex items-center gap-1"
+                                    className="ml-2 md:ml-4 px-3 py-1 text-xs md:text-sm bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800/50 transition-all flex items-center gap-1"
                                 >
                                     <span>🗑️</span>
                                     <span className="hidden sm:inline">Limpiar horario</span>

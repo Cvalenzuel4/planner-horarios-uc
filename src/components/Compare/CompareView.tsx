@@ -54,20 +54,20 @@ export const CompareView: React.FC<CompareViewProps> = ({ slots, onLoadSlot, act
     }, [slots]);
 
     return (
-        <div className="h-full flex flex-col p-4 bg-gray-50/50 overflow-hidden">
-            <h2 className="text-xl font-bold text-[#003366] mb-4 flex-shrink-0">Comparar Horarios</h2>
+        <div className="h-full flex flex-col p-4 bg-gray-50/50 dark:bg-black/20 overflow-hidden">
+            <h2 className="text-xl font-bold text-[#003366] dark:text-blue-400 mb-4 flex-shrink-0">Comparar Horarios</h2>
 
             {/* Desktop View: Grid de 3 columnas */}
             <div className="hidden lg:grid grid-cols-3 gap-4 h-full min-h-0">
                 {columns.map((col) => (
-                    <div key={col.key} className={`flex flex-col h-full rounded-xl border ${col.key === activeSlot ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'} bg-white shadow-sm overflow-hidden`}>
+                    <div key={col.key} className={`flex flex-col h-full rounded-xl border ${col.key === activeSlot ? 'border-blue-300 ring-1 ring-blue-100 dark:border-blue-500/50 dark:ring-blue-900/30' : 'border-gray-200 dark:border-gray-800'} bg-white dark:bg-gray-900 shadow-sm overflow-hidden`}>
                         {/* Header Columna */}
-                        <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div className="p-3 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                             <div>
-                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mr-2 ${col.isEmpty ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>
+                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mr-2 ${col.isEmpty ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'}`}>
                                     {col.key}
                                 </span>
-                                <span className="font-semibold text-gray-700 text-sm truncate max-w-[150px]" title={col.label}>
+                                <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm truncate max-w-[150px]" title={col.label}>
                                     {col.label}
                                 </span>
                             </div>
@@ -75,7 +75,7 @@ export const CompareView: React.FC<CompareViewProps> = ({ slots, onLoadSlot, act
                             {!col.isEmpty && (
                                 <button
                                     onClick={() => onLoadSlot(col.key)}
-                                    className="text-xs bg-white border border-gray-200 hover:border-blue-300 hover:text-blue-600 px-2 py-1 rounded transition-colors shadow-sm"
+                                    className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 px-2 py-1 rounded transition-colors shadow-sm"
                                 >
                                     Cargar
                                 </button>
@@ -85,7 +85,7 @@ export const CompareView: React.FC<CompareViewProps> = ({ slots, onLoadSlot, act
                         {/* Contenido */}
                         <div className="flex-1 overflow-auto p-2 relative">
                             {col.isEmpty ? (
-                                <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 opacity-60">
                                     <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
@@ -107,7 +107,7 @@ export const CompareView: React.FC<CompareViewProps> = ({ slots, onLoadSlot, act
 
                         {/* Resumen Footer */}
                         {!col.isEmpty && (
-                            <div className="p-3 border-t border-gray-100 bg-white text-xs text-gray-500">
+                            <div className="p-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400">
                                 <p>{col.secciones.length} secciones</p>
                                 <p className="truncate">Actualizado: {new Date(col.snapshot!.timestamp).toLocaleDateString()} {new Date(col.snapshot!.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
@@ -125,8 +125,8 @@ export const CompareView: React.FC<CompareViewProps> = ({ slots, onLoadSlot, act
                             key={col.key}
                             onClick={() => setMobileTab(col.key)}
                             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mobileTab === col.key
-                                ? 'bg-blue-50 text-blue-700 shadow-sm'
-                                : 'text-gray-500 hover:bg-gray-50'
+                                ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }`}
                         >
                             {col.key} {col.isEmpty ? '' : '•'}
@@ -147,8 +147,8 @@ export const CompareView: React.FC<CompareViewProps> = ({ slots, onLoadSlot, act
                         }
                         return (
                             <>
-                                <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                                    <span className="font-semibold text-gray-700">
+                                <div className="p-3 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                                    <span className="font-semibold text-gray-700 dark:text-gray-200">
                                         {activeCol.label}
                                     </span>
                                     <button

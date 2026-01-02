@@ -2,14 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Variables CSS globales - Clean UI Theme */
+/* ============================================
+   THEME TOKENS - Light/Dark Mode Support
+   ============================================ */
 :root {
+  /* Semantic color tokens (HSL values without hsl() wrapper) */
+  --background: 220 14% 96%;
+  /* gray-100 */
+  --surface: 0 0% 100%;
+  /* white */
+  --surface-hover: 220 14% 96%;
+  /* gray-100 */
+  --foreground: 224 71% 4%;
+  /* gray-900 */
+  --muted: 220 9% 46%;
+  /* gray-500 */
+  --muted-foreground: 218 11% 65%;
+  /* gray-400 */
+  --border: 220 13% 91%;
+  /* gray-200 */
+  --ring: 24 95% 53%;
+  /* orange-500 */
+  --primary: 24 95% 53%;
+  /* orange-500 */
+  --primary-foreground: 0 0% 100%;
+  /* white */
+
   /* Colores institucionales */
   --color-primary: #EA580C;
-  /* Orange CTA */
   --color-primary-hover: #C2410C;
   --color-institutional: #003366;
-  /* Azul UC */
 
   /* Colores de actividad (para leyenda) */
   --color-catedra: #F59E0B;
@@ -22,6 +44,30 @@
   --color-conflicto: #EF4444;
 }
 
+.dark {
+  /* Dark theme semantic tokens */
+  --background: 224 71% 4%;
+  /* gray-950 */
+  --surface: 220 14% 10%;
+  /* gray-900 */
+  --surface-hover: 220 14% 14%;
+  /* gray-800 */
+  --foreground: 210 40% 98%;
+  /* gray-50 */
+  --muted: 218 11% 65%;
+  /* gray-400 */
+  --muted-foreground: 220 9% 46%;
+  /* gray-500 */
+  --border: 217 19% 27%;
+  /* gray-700 */
+  --ring: 24 95% 53%;
+  /* orange-500 */
+  --primary: 24 95% 53%;
+  /* orange-500 */
+  --primary-foreground: 0 0% 100%;
+  /* white */
+}
+
 /* Reset básico */
 * {
   margin: 0;
@@ -31,29 +77,29 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: #F3F4F6;
+  @apply bg-gray-100 dark:bg-gray-950;
   min-height: 100vh;
-  color: #1f2937;
+  @apply text-gray-900 dark:text-gray-50;
 }
 
-/* Estilos del scrollbar - Light theme */
+/* Estilos del scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #E5E7EB;
+  @apply bg-gray-200 dark:bg-gray-800;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9CA3AF;
+  @apply bg-gray-400 dark:bg-gray-600;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
+  @apply bg-gray-500 dark:bg-gray-500;
 }
 
 /* Animación de conflicto */
@@ -74,19 +120,17 @@ body {
   border: 2px solid var(--color-conflicto);
 }
 
-/* Clean UI panels - Solid white cards */
+/* ============================================
+   UI COMPONENTS - With Dark Mode Support
+   ============================================ */
+
+/* Clean UI panels */
 .glass-panel {
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm dark:shadow-lg;
 }
 
 .glass-panel-dark {
-  background: white;
-  border-bottom: 1px solid #E5E7EB;
-  border-radius: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  @apply bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-none shadow-sm;
 }
 
 /* Botón primario - Orange CTA */
@@ -94,9 +138,9 @@ body {
   @apply px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
 }
 
-/* Botón secundario - Light theme */
+/* Botón secundario */
 .btn-secondary {
-  @apply px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg border border-gray-200 transition-all duration-200 hover:border-gray-300 active:scale-95;
+  @apply px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 active:scale-95;
 }
 
 /* Botón de peligro */
@@ -104,14 +148,14 @@ body {
   @apply px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 active:scale-95;
 }
 
-/* Input estilizado - Light theme */
+/* Input estilizado */
 .input-styled {
-  @apply w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200;
+  @apply w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200;
 }
 
-/* Select estilizado - Light theme */
+/* Select estilizado */
 .select-styled {
-  @apply px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200 cursor-pointer appearance-none;
+  @apply px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200 cursor-pointer appearance-none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
@@ -120,17 +164,16 @@ body {
 }
 
 .select-styled option {
-  background: white;
-  color: #1f2937;
+  @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
 }
 
-/* Celda del grid - Light theme */
+/* Celda del grid */
 .grid-cell {
-  @apply relative min-h-[60px] border border-gray-100 rounded-lg transition-all duration-150 hover:border-gray-200 bg-gray-50/50;
+  @apply relative min-h-[60px] border border-gray-100 dark:border-gray-700 rounded-lg transition-all duration-150 hover:border-gray-200 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50;
 }
 
 .grid-cell-header {
-  @apply bg-white font-semibold text-gray-700 text-center py-3 text-sm border border-gray-100 rounded-lg;
+  @apply bg-white dark:bg-gray-800 font-semibold text-gray-700 dark:text-gray-200 text-center py-3 text-sm border border-gray-100 dark:border-gray-700 rounded-lg;
 }
 
 /* Bloque de horario */
@@ -138,14 +181,14 @@ body {
   @apply absolute inset-1 rounded-md flex flex-col justify-center items-center text-xs font-medium shadow-sm transition-transform duration-150 hover:scale-[1.02] hover:z-10 cursor-pointer;
 }
 
-/* Checkbox estilizado - Light theme */
+/* Checkbox estilizado */
 .checkbox-styled {
-  @apply w-5 h-5 rounded border-2 border-gray-300 bg-white checked:bg-orange-500 checked:border-orange-500 focus:ring-2 focus:ring-orange-500/30 focus:ring-offset-0 transition-all duration-150 cursor-pointer;
+  @apply w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 checked:bg-orange-500 checked:border-orange-500 focus:ring-2 focus:ring-orange-500/30 focus:ring-offset-0 transition-all duration-150 cursor-pointer;
 }
 
 /* Tooltip */
 .tooltip {
-  @apply invisible opacity-0 absolute z-50 px-3 py-2 text-xs font-medium bg-gray-900 text-white rounded-lg shadow-lg transition-all duration-200;
+  @apply invisible opacity-0 absolute z-50 px-3 py-2 text-xs font-medium bg-gray-900 dark:bg-gray-700 text-white rounded-lg shadow-lg transition-all duration-200;
 }
 
 .tooltip-trigger:hover .tooltip {
@@ -154,12 +197,12 @@ body {
 
 /* Modal overlay */
 .modal-overlay {
-  @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center p-4;
+  @apply fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4;
 }
 
-/* Modal content - Light theme */
+/* Modal content */
 .modal-content {
-  @apply bg-white rounded-2xl shadow-xl border border-gray-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+  @apply bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
 }
 
 /* Badge */
@@ -172,9 +215,9 @@ body {
   @apply transition-all duration-300 ease-in-out;
 }
 
-/* Loader - Light theme */
+/* Loader */
 .loader {
-  @apply w-8 h-8 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin;
+  @apply w-8 h-8 border-4 border-gray-200 dark:border-gray-700 border-t-orange-500 rounded-full animate-spin;
 }
 
 /* ============================================
@@ -184,19 +227,16 @@ body {
 /* Mejoras para dispositivos táctiles */
 @media (hover: none) and (pointer: coarse) {
 
-  /* Botones más grandes para touch */
   .btn-primary,
   .btn-secondary,
   .btn-danger {
     @apply min-h-[44px] min-w-[44px];
   }
 
-  /* Checkboxes más grandes */
   .checkbox-styled {
     @apply w-6 h-6;
   }
 
-  /* Scrollbars más anchos para touch */
   ::-webkit-scrollbar {
     width: 12px;
     height: 12px;
@@ -221,7 +261,6 @@ body {
     @apply leading-tight;
   }
 
-  /* Modales más pequeños */
   .modal-content {
     @apply max-h-[95vh] mx-2;
   }

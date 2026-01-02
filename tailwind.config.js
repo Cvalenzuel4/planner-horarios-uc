@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,6 +8,19 @@ export default {
     theme: {
         extend: {
             colors: {
+                // Semantic theme colors
+                background: 'hsl(var(--background))',
+                surface: 'hsl(var(--surface))',
+                'surface-hover': 'hsl(var(--surface-hover))',
+                foreground: 'hsl(var(--foreground))',
+                muted: 'hsl(var(--muted))',
+                'muted-foreground': 'hsl(var(--muted-foreground))',
+                'border-color': 'hsl(var(--border))',
+                ring: 'hsl(var(--ring))',
+                'th-primary': {
+                    DEFAULT: 'hsl(var(--primary))',
+                    foreground: 'hsl(var(--primary-foreground))',
+                },
                 // Colores para tipos de actividad
                 catedra: '#FBBF24',      // amber-400
                 laboratorio: '#7DD3FC',   // sky-300

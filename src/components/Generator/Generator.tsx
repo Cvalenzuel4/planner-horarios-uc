@@ -247,16 +247,16 @@ export const Generator: React.FC<GeneratorProps> = ({
 
     // ---------- Render ----------
     return (
-        <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-white">
+        <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-white dark:bg-gray-900">
 
             {/* ================= SIDEBAR ================= */}
-            <div className="w-full lg:w-[400px] flex-shrink-0 flex flex-col border-r border-gray-200 bg-white h-full overflow-hidden z-10 shadow-sm relative">
+            <div className="w-full lg:w-[400px] flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-full overflow-hidden z-10 shadow-sm relative">
 
-                <div className="p-4 border-b border-gray-100 flex-shrink-0 bg-white">
-                    <h2 className="text-xl font-bold text-gray-800 mb-1">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">
                         Generador
                     </h2>
-                    <p className="text-gray-500 text-xs">
+                    <p className="text-gray-500 dark:text-gray-400 text-xs">
                         {resultados.length > 0
                             ? `Se encontraron ${resultados.length} combinaciones`
                             : 'Configura y genera tus opciones.'}
@@ -264,11 +264,11 @@ export const Generator: React.FC<GeneratorProps> = ({
                     </p>
                 </div>
 
-                <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50/30">
+                <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50/30 dark:bg-black/20">
 
                     {/* Buscador API */}
-                    <div className="p-4 border-b border-gray-100 bg-white">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
                             Buscar Ramos desde API
                         </label>
                         <div className="flex flex-col gap-2 mb-2">
@@ -303,14 +303,14 @@ export const Generator: React.FC<GeneratorProps> = ({
                         </div>
 
                         {loadingProgress && (
-                            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-2 border border-blue-100 flex items-center gap-2">
-                                <span className="loader w-3 h-3 border-blue-600" />
+                            <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded mb-2 border border-blue-100 dark:border-blue-800/30 flex items-center gap-2">
+                                <span className="loader w-3 h-3 border-blue-600 dark:border-blue-400" />
                                 Buscando {loadingProgress.currentSigla}...
                             </div>
                         )}
 
                         {Object.keys(erroresPorSigla).length > 0 && (
-                            <div className="mt-2 p-2 bg-amber-50 rounded text-xs text-amber-700 border border-amber-100">
+                            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-xs text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30">
                                 {Object.entries(erroresPorSigla).map(([sigla, msg]) => (
                                     <div key={sigla}>• <b>{sigla}:</b> {msg}</div>
                                 ))}
@@ -332,14 +332,14 @@ export const Generator: React.FC<GeneratorProps> = ({
                     {/* Lista Ramos */}
                     <div className="p-4">
                         <div className="flex justify-between items-center mb-3">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Mis Ramos ({ramos.length})
                             </label>
                             {ramos.length > 0 && (
                                 <div className="text-xs flex items-center gap-3">
-                                    <div className="space-x-2 border-r border-gray-200 pr-3">
-                                        <button onClick={seleccionarTodos} className="text-blue-600 hover:underline">Todos</button>
-                                        <button onClick={deseleccionarTodos} className="text-gray-400 hover:text-gray-600">Ninguno</button>
+                                    <div className="space-x-2 border-r border-gray-200 dark:border-gray-700 pr-3">
+                                        <button onClick={seleccionarTodos} className="text-blue-600 dark:text-blue-400 hover:underline">Todos</button>
+                                        <button onClick={deseleccionarTodos} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">Ninguno</button>
                                     </div>
                                     <button
                                         onClick={() => {
@@ -376,15 +376,15 @@ export const Generator: React.FC<GeneratorProps> = ({
                         </div>
 
                         {ramos.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400 text-sm italic border-2 border-dashed border-gray-100 rounded-xl">
+                            <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-sm italic border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-xl">
                                 No hay ramos disponibles.
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {ramos.map((ramo) => (
-                                    <div key={ramo.sigla} className="border border-gray-100 rounded-lg bg-white shadow-sm overflow-hidden">
+                                    <div key={ramo.sigla} className="border border-gray-100 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
                                         <div
-                                            className={`p-2.5 flex items-center gap-3 cursor-pointer transition-colors ${ramosSeleccionados.has(ramo.sigla) ? 'bg-blue-50/60' : 'hover:bg-gray-50'}`}
+                                            className={`p-2.5 flex items-center gap-3 cursor-pointer transition-colors ${ramosSeleccionados.has(ramo.sigla) ? 'bg-blue-50/60 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
                                             onClick={() => toggleRamo(ramo.sigla)}
                                         >
                                             <input
@@ -399,7 +399,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                                                     {ramosSeleccionados.has(ramo.sigla) && ramo.secciones.length > 0 && (
                                                         <button
                                                             onClick={(e) => toggleExpandirRamo(ramo.sigla, e)}
-                                                            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-black/5"
+                                                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10"
                                                         >
                                                             <svg className={`w-4 h-4 transition-transform ${ramosExpandidos.has(ramo.sigla) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -416,24 +416,24 @@ export const Generator: React.FC<GeneratorProps> = ({
 
                                         {/* Secciones expandibles */}
                                         {ramosSeleccionados.has(ramo.sigla) && ramosExpandidos.has(ramo.sigla) && (
-                                            <div className="bg-gray-50 p-2 border-t border-gray-100 space-y-1">
+                                            <div className="bg-gray-50 dark:bg-gray-900/50 p-2 border-t border-gray-100 dark:border-gray-700 space-y-1">
                                                 <div className="flex justify-between mb-1">
-                                                    <span className="text-[10px] text-gray-400 font-bold uppercase">Secciones</span>
-                                                    <button onClick={() => seleccionarTodasSecciones(ramo)} className="text-[10px] text-blue-500 hover:text-blue-700">
+                                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase">Secciones</span>
+                                                    <button onClick={() => seleccionarTodasSecciones(ramo)} className="text-[10px] text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
                                                         Todas/Ninguna
                                                     </button>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-1">
                                                     {ramo.secciones.map(sec => (
-                                                        <label key={sec.id} className="flex items-center gap-2 cursor-pointer p-1.5 rounded hover:bg-white text-xs border border-transparent hover:border-gray-100 transition-colors">
+                                                        <label key={sec.id} className="flex items-center gap-2 cursor-pointer p-1.5 rounded hover:bg-white dark:hover:bg-gray-800 text-xs border border-transparent hover:border-gray-100 dark:hover:border-gray-700 transition-colors">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={isSeccionSeleccionada(ramo.sigla, sec.id)}
                                                                 onChange={() => toggleSeccion(ramo.sigla, sec.id)}
                                                                 className="checkbox-styled w-3.5 h-3.5 flex-shrink-0"
                                                             />
-                                                            <span className={`truncate ${!isSeccionSeleccionada(ramo.sigla, sec.id) ? 'text-gray-400' : 'text-gray-700'}`}>
-                                                                Sec {sec.numero} {sec.metadatos?.profesor && <span className="text-gray-500 ml-1">({sec.metadatos.profesor})</span>}{sec.metadatos?.campus && <span className="text-gray-400 ml-1 text-[10px]">[{sec.metadatos.campus}]</span>}
+                                                            <span className={`truncate ${!isSeccionSeleccionada(ramo.sigla, sec.id) ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                                Sec {sec.numero} {sec.metadatos?.profesor && <span className="text-gray-500 dark:text-gray-400 ml-1">({sec.metadatos.profesor})</span>}{sec.metadatos?.campus && <span className="text-gray-400 dark:text-gray-500 ml-1 text-[10px]">[{sec.metadatos.campus}]</span>}
                                                             </span>
                                                         </label>
                                                     ))}
@@ -447,8 +447,8 @@ export const Generator: React.FC<GeneratorProps> = ({
 
                         {/* LISTA RESULTADOS SIDEBAR */}
                         {resultados.length > 0 && (
-                            <div className="mt-8 border-t border-gray-200 pt-4">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                            <div className="mt-8 border-t border-gray-200 dark:border-gray-800 pt-4">
+                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
                                     Navegación Rápida
                                 </label>
                                 <div className="space-y-1.5">
@@ -457,11 +457,11 @@ export const Generator: React.FC<GeneratorProps> = ({
                                         return (
                                             <div
                                                 key={idx}
-                                                className={`p-2 rounded-lg border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
+                                                className={`p-2 rounded-lg border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30 shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                                                 onClick={() => setActiveIndex(idx)}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                                    <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
                                                         {idx + 1}
                                                     </span>
                                                     {res.tieneConflictosPermitidos && (
@@ -470,7 +470,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                                                     <span className="text-[10px] text-gray-400">{obtenerInfoCombinacion(res).bloquesOcupados} blq</span>
                                                 </div>
                                                 <button
-                                                    className={`text-[10px] uppercase font-bold tracking-wide ${isActive ? 'text-blue-600' : 'text-gray-300'}`}
+                                                    className={`text-[10px] uppercase font-bold tracking-wide ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-gray-600'}`}
                                                 >
                                                     {isActive ? 'Viendo' : 'Ver'}
                                                 </button>
@@ -485,10 +485,10 @@ export const Generator: React.FC<GeneratorProps> = ({
                 </div>
 
                 {/* Footer Sidebar */}
-                <div className="p-4 border-t border-gray-100 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
                     <button
                         onClick={() => setShowConfigModal(true)}
-                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-3 w-full justify-center transition-colors hover:bg-gray-50 py-1 rounded"
+                        className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1 mb-3 w-full justify-center transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 py-1 rounded"
                     >
                         ⚙️ Topes permitidos {permisosTope.size > 0 && `(${permisosTope.size})`}
                     </button>
@@ -500,7 +500,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                         {generando ? 'Generando...' : '⚡ Generar Combinaciones'}
                     </button>
                     {(error || errorAPI) && (
-                        <div className="mt-2 text-xs text-red-500 text-center font-medium animate-pulse bg-red-50 p-1 rounded border border-red-100">
+                        <div className="mt-2 text-xs text-red-500 dark:text-red-400 text-center font-medium animate-pulse bg-red-50 dark:bg-red-900/20 p-1 rounded border border-red-100 dark:border-red-800/30">
                             {error || errorAPI}
                         </div>
                     )}
@@ -508,7 +508,7 @@ export const Generator: React.FC<GeneratorProps> = ({
             </div>
 
             {/* ================= MAIN CONTENT ================= */}
-            <div className="flex-1 flex flex-col h-full bg-slate-50 min-w-0">
+            <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black/20 min-w-0">
                 <div className="flex-1 overflow-hidden relative flex flex-col">
                     {resultados.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 select-none">
@@ -516,13 +516,13 @@ export const Generator: React.FC<GeneratorProps> = ({
                                 /* Error state with diagnostic available */
                                 <>
                                     <div className="text-5xl mb-4">❌</div>
-                                    <h3 className="text-lg font-medium text-gray-600">No hay combinaciones posibles</h3>
-                                    <p className="text-sm mt-2 text-gray-400 max-w-sm text-center">
+                                    <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">No hay combinaciones posibles</h3>
+                                    <p className="text-sm mt-2 text-gray-400 dark:text-gray-500 max-w-sm text-center">
                                         Con las restricciones actuales no se encontró ningún horario sin conflictos.
                                     </p>
                                     <button
                                         onClick={() => setShowDiagnosticModal(true)}
-                                        className="mt-4 text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium flex items-center gap-1"
+                                        className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline text-sm font-medium flex items-center gap-1"
                                     >
                                         <span>📊</span> Ver detalle de conflictos
                                     </button>
@@ -530,9 +530,9 @@ export const Generator: React.FC<GeneratorProps> = ({
                             ) : (
                                 /* Normal empty state */
                                 <>
-                                    <div className="text-8xl mb-4 grayscale opacity-20">📅</div>
-                                    <h3 className="text-xl font-medium text-gray-400">Generador de Horarios</h3>
-                                    <p className="text-sm mt-2 max-w-sm text-center text-gray-400">
+                                    <div className="text-8xl mb-4 grayscale opacity-20 dark:invert">📅</div>
+                                    <h3 className="text-xl font-medium text-gray-400 dark:text-gray-500">Generador de Horarios</h3>
+                                    <p className="text-sm mt-2 max-w-sm text-center text-gray-400 dark:text-gray-500">
                                         Busca ramos en la API, selecciona tus preferencias en el panel izquierdo y presiona "Generar".
                                     </p>
                                 </>
@@ -541,20 +541,20 @@ export const Generator: React.FC<GeneratorProps> = ({
                     ) : (
                         <>
                             {/* Info Bar */}
-                            <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-10 flex-shrink-0">
+                            <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex justify-between items-center shadow-sm z-10 flex-shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="flex flex-col">
-                                        <span className="text-lg font-bold text-gray-800 leading-none">Opción {activeIndex + 1}</span>
+                                        <span className="text-lg font-bold text-gray-800 dark:text-gray-100 leading-none">Opción {activeIndex + 1}</span>
                                     </div>
                                 </div>
-                                <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                                <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-100 dark:border-gray-700">
                                     ⏱️ {obtenerInfoCombinacion(resultados[activeIndex]).bloquesOcupados} bloques
                                 </div>
                             </div>
 
                             {/* GRID */}
-                            <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-slate-50/50">
-                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 min-w-[800px] mx-auto max-w-6xl h-full flex flex-col">
+                            <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-slate-50/50 dark:bg-black/20">
+                                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 min-w-[800px] mx-auto max-w-6xl h-full flex flex-col">
                                     <ScheduleGrid
                                         seccionesSeleccionadas={resultados[activeIndex].secciones}
                                         previewSecciones={[]}
@@ -563,23 +563,23 @@ export const Generator: React.FC<GeneratorProps> = ({
                             </div>
 
                             {/* NAVIGATION BAR */}
-                            <div className="bg-white border-t border-gray-200 p-4 flex flex-col md:flex-row justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 gap-4 flex-shrink-0">
-                                <div className="flex items-center gap-2 bg-gray-100/50 p-1.5 rounded-xl border border-gray-200">
+                            <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4 flex flex-col md:flex-row justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 gap-4 flex-shrink-0">
+                                <div className="flex items-center gap-2 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
                                     <button
                                         onClick={handlePrev}
                                         disabled={activeIndex === 0}
-                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none bg-transparent hover:shadow min-w-[40px]"
+                                        className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none bg-transparent hover:shadow min-w-[40px]"
                                     >
                                         ◀
                                     </button>
                                     <div className="flex flex-col items-center w-24 px-2 select-none">
-                                        <span className="font-bold text-gray-800 text-lg leading-none">{activeIndex + 1}</span>
-                                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">de {resultados.length}</span>
+                                        <span className="font-bold text-gray-800 dark:text-gray-100 text-lg leading-none">{activeIndex + 1}</span>
+                                        <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">de {resultados.length}</span>
                                     </div>
                                     <button
                                         onClick={handleNext}
                                         disabled={activeIndex === resultados.length - 1}
-                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none bg-transparent hover:shadow min-w-[40px]"
+                                        className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none bg-transparent hover:shadow min-w-[40px]"
                                     >
                                         ▶
                                     </button>
