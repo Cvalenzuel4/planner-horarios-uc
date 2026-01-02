@@ -141,19 +141,13 @@ export async function buscarCursos(
 
         const data: APIResponse = await response.json();
 
-        if (!data.success) {
-            return {
-                success: false,
-                ramos: [],
-                cursosAPI: [],
-                message: data.message || 'Error desconocido',
-            };
-        }
+        // La nueva respuesta es { semestre, cantidad, resultados }
+        // No hay campo 'success' explícito, asumimos éxito si llegamos aquí (status 200)
 
         // Convertir cursos de la API al formato interno
         const ramosMap = new Map<string, Ramo>();
 
-        for (const cursoAPI of data.data) {
+        for (const cursoAPI of data.resultados) {
             const siglaRamo = cursoAPI.sigla;
 
             if (!ramosMap.has(siglaRamo)) {
@@ -173,9 +167,13 @@ export async function buscarCursos(
         return {
             success: true,
             ramos: Array.from(ramosMap.values()),
-            cursosAPI: data.data,
-            message: data.message,
-            meta: data.meta,
+            cursosAPI: data.resultados,
+            message: data.cantidad > 0 ? 'Cursos encontrados' : 'No se encontraron cursos',
+            meta: {
+                sigla: sigla,
+                semestre: data.semestre,
+                total_secciones: data.cantidad
+            },
         };
     } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {

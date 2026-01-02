@@ -27,16 +27,11 @@ export interface BuscarMultipleResponse {
     };
 }
 
-/** Respuesta de la API de búsqueda de cursos */
+/** Respuesta del endpoint de búsqueda de cursos (v2 con ScrapingAnt) */
 export interface APIResponse {
-    success: boolean;
-    data: CursoAPI[];
-    message: string;
-    meta: {
-        sigla: string;
-        semestre: string;
-        total_secciones: number;
-    };
+    semestre: string;
+    cantidad: number;
+    resultados: CursoAPI[];
 }
 
 /** Detalle de una fila de vacantes */
