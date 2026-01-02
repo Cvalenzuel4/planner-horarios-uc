@@ -19,9 +19,11 @@ interface CourseSearchProps {
     externalSearchRequest?: { term: string; timestamp: number } | null;
     semestre: string;
     onSemestreChange: (semestre: string) => void;
+    cachedRamos?: Map<string, Ramo>;
+    onCacheRamos?: (ramos: Ramo[]) => void;
 }
 
-export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNuevosRamos, externalSearchRequest, semestre, onSemestreChange }: CourseSearchProps) {
+export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNuevosRamos, externalSearchRequest, semestre, onSemestreChange, cachedRamos, onCacheRamos }: CourseSearchProps) {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [apiReady, setApiReady] = useState(false);
@@ -52,19 +54,67 @@ export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNue
     }, []);
 
     const handleSearch = async (forceQuery?: string) => {
-        const q = forceQuery !== undefined ? forceQuery : query;
-        if (!q.trim()) return;
+        const q = (forceQuery !== undefined ? forceQuery : query).trim().toUpperCase();
+        if (!q) return;
 
         setLoading(true);
         setError(null);
         setSearched(true);
         setResults([]);
 
+        // 1. Revisar caché compartido primero
+        if (cachedRamos && cachedRamos.has(q)) {
+            const ramoEnCache = cachedRamos.get(q)!;
+            // Verificar si corresponde al semestre actual
+            if (ramoEnCache.semestre === semestre) {
+                console.log(`[CourseSearch] Cache hit para ${q}`);
+
+                const diaMap: Record<string, string> = {
+                    'L': 'Lunes', 'M': 'Martes', 'W': 'Miércoles', 'J': 'Jueves', 'V': 'Viernes', 'S': 'Sábado'
+                };
+                const tipoMap: Record<string, string> = {
+                    'catedra': 'CLAS', 'ayudantia': 'AYU', 'laboratorio': 'LAB', 'taller': 'TAL', 'terreno': 'TER', 'practica': 'PRA'
+                };
+
+                // Reconstruir lista de secciones "API-like" desde el Ramo en caché
+                // Esto es necesario porque CourseCard espera objetos CursoAPI (con estructura de API)
+                const fakeResults: CursoAPI[] = ramoEnCache.secciones.map(s => ({
+                    nrc: s.nrc || '0000',
+                    sigla: ramoEnCache.sigla,
+                    seccion: s.numero,
+                    nombre: ramoEnCache.nombre,
+                    profesor: s.metadatos?.profesor || 'Desconocido',
+                    campus: s.metadatos?.campus || '',
+                    creditos: 0,
+                    vacantes_totales: 0,
+                    vacantes_disponibles: 0,
+                    horarios: s.actividades.flatMap(a => a.bloques.map(b => ({
+                        tipo: (tipoMap[a.tipo] || 'CLAS') as any,
+                        dia: (diaMap[b.dia] || 'Lunes') as any,
+                        modulos: [b.modulo],
+                        sala: s.metadatos?.sala || null
+                    }))),
+                    requiere_laboratorio: false
+                }));
+
+                setResults(fakeResults);
+                setApiReady(true);
+                setLoading(false);
+                return;
+            }
+        }
+
         const resultado = await buscarCursos(q, semestre);
 
         if (resultado.success) {
             setResults(resultado.cursosAPI);
             setApiReady(true);
+
+            // Guardar en caché compartido
+            if (onCacheRamos && resultado.ramos.length > 0) {
+                onCacheRamos(resultado.ramos);
+            }
+
             // Notificar al padre los ramos encontrados para que los guarde
             if (resultado.ramos.length > 0) {
                 onNuevosRamos(resultado.ramos);
@@ -186,7 +236,7 @@ export function CourseSearch({ seccionesSeleccionadasIds, onToggleSeccion, onNue
                     <div className="space-y-4">
                         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 px-1">
                             <span>{results.length} secciones encontradas</span>
-                            <span>{results[0].nombre}</span>
+                            <span>{results[0].nombre} {cachedRamos?.has(query.trim().toUpperCase()) && <span className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded ml-2">Cached</span>}</span>
                         </div>
                         {results.map((curso) => (
                             <CourseCard

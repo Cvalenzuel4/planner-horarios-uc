@@ -19,7 +19,8 @@ interface GeneratorProps {
     onAplicarResultado: (secciones: SeccionConMask[]) => void;
     semestre: string;
     onSemestreChange: (semestre: string) => void;
-    // Removed unused preview props
+    cachedRamos?: Map<string, Ramo>;
+    onCacheRamos?: (ramos: Ramo[]) => void;
 }
 
 export const Generator: React.FC<GeneratorProps> = ({
@@ -30,6 +31,8 @@ export const Generator: React.FC<GeneratorProps> = ({
     onAplicarResultado,
     semestre,
     onSemestreChange,
+    cachedRamos,
+    onCacheRamos,
 }) => {
     // ---------- Hook para cargar cursos desde API ----------
     const {
@@ -41,7 +44,7 @@ export const Generator: React.FC<GeneratorProps> = ({
         fetchAllCourses,
         clearCourses,
         removeCourses,
-    } = useCourseGenerator();
+    } = useCourseGenerator({ onCacheRamos });
 
     // Limpiar cursos de la API cuando cambia el semestre
     useEffect(() => {
@@ -69,13 +72,20 @@ export const Generator: React.FC<GeneratorProps> = ({
     const [conflictDiagnostic, setConflictDiagnostic] = useState<TopPairResult[] | null>(null);
     const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
 
-    // ---------- Combinar ramos locales con los de la API ----------
+    // ---------- Combinar ramos locales con los de la API y Caché ----------
     const ramos = useMemo(() => {
         const ramosMap = new Map<string, Ramo>();
+        // 1. Ramos guardados
         for (const ramo of ramosLocales) ramosMap.set(ramo.sigla, ramo);
+        // 2. Ramos en caché global
+        if (cachedRamos) {
+            for (const [sigla, ramo] of cachedRamos) ramosMap.set(sigla, ramo);
+        }
+        // 3. Ramos fetched localmente (redundante si onCache funciona, pero seguro)
         for (const ramo of cursosAPI) ramosMap.set(ramo.sigla, ramo);
+
         return Array.from(ramosMap.values());
-    }, [ramosLocales, cursosAPI]);
+    }, [ramosLocales, cursosAPI, cachedRamos]);
 
     // ---------- Handler para cargar desde API ----------
     const handleCargarDesdeAPI = async () => {

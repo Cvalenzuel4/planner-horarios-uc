@@ -13,6 +13,10 @@ export interface FetchProgress {
     currentSigla: string;
 }
 
+export interface UseCourseGeneratorProps {
+    onCacheRamos?: (ramos: Ramo[]) => void;
+}
+
 export interface UseCourseGeneratorReturn {
     // Estado
     isLoading: boolean;
@@ -31,7 +35,7 @@ export interface UseCourseGeneratorReturn {
  * Hook para manejar la carga de cursos desde la API
  * Usa el endpoint batch para múltiples siglas (optimizado)
  */
-export function useCourseGenerator(): UseCourseGeneratorReturn {
+export function useCourseGenerator({ onCacheRamos }: UseCourseGeneratorProps = {}): UseCourseGeneratorReturn {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState<FetchProgress | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -138,6 +142,11 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
                 return Array.from(ramosMap.values());
             });
 
+            // Sincronizar con caché externo si existe
+            if (onCacheRamos && nuevosRamos.length > 0) {
+                onCacheRamos(nuevosRamos);
+            }
+
             setErroresPorSigla(prev => ({ ...prev, ...erroresNuevos }));
 
             // Error general solo si no se cargó nada nuevo
@@ -153,7 +162,7 @@ export function useCourseGenerator(): UseCourseGeneratorReturn {
             setIsLoading(false);
             setLoadingProgress(null);
         }
-    }, []);
+    }, [onCacheRamos]);
 
     /**
      * Limpia los cursos cargados desde la API

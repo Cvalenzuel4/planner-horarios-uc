@@ -210,6 +210,9 @@ function App() {
         return () => window.removeEventListener('resize', updateGridHeight);
     }, [tab, seccionesSeleccionadas]);
 
+    // Estado de caché compartido (Sigla -> Ramo)
+    const [cachedRamos, setCachedRamos] = useState<Map<string, Ramo>>(new Map());
+
     // Handler para guardar ramos encontrados en la búsqueda
     const handleNuevosRamos = useCallback(async (nuevosRamos: Ramo[]) => {
         try {
@@ -240,6 +243,15 @@ function App() {
             console.error('Error al guardar nuevos ramos:', err);
         }
     }, [ramos, currentSemester]);
+
+    // Handler para actualizar el caché compartido sin guardarlo en "Mis Ramos"
+    const handleCacheRamos = useCallback((nuevosRamos: Ramo[]) => {
+        setCachedRamos(prev => {
+            const nuevoCache = new Map(prev);
+            nuevosRamos.forEach(r => nuevoCache.set(r.sigla, r));
+            return nuevoCache;
+        });
+    }, []);
 
     const handleToggleSeccion = useCallback((seccion: SeccionConMask) => {
         setSeccionesSeleccionadasIds(prev => {
@@ -596,6 +608,8 @@ function App() {
                             externalSearchRequest={searchRequest}
                             semestre={currentSemester}
                             onSemestreChange={setCurrentSemester}
+                            cachedRamos={cachedRamos}
+                            onCacheRamos={handleCacheRamos}
                         />
                     </div>
 
@@ -672,6 +686,8 @@ function App() {
                         onAplicarResultado={handleAplicarResultado}
                         semestre={currentSemester}
                         onSemestreChange={setCurrentSemester}
+                        cachedRamos={cachedRamos}
+                        onCacheRamos={handleCacheRamos}
                     />
                 </div>
 
