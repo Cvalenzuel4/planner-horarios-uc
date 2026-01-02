@@ -77,7 +77,7 @@ export const NoResultsDiagnosticModal: React.FC<NoResultsDiagnosticModalProps> =
                 {/* Content */}
                 <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">
                     <p className="text-gray-500 text-sm mb-4">
-                        Los siguientes pares de ramos generaron más descartess por topes de horario:
+                        Los siguientes pares de ramos generaron más descartes por topes de horario:
                     </p>
 
                     <div className="space-y-3">
@@ -108,7 +108,7 @@ export const NoResultsDiagnosticModal: React.FC<NoResultsDiagnosticModalProps> =
                                             </span>
                                         </div>
                                         <div className="mt-1 text-xs text-gray-500 ml-8">
-                                            Pico: {getDayName(pair.peakDay)} · M{pair.peakModule}
+                                            Peak: {getDayName(pair.peakDay)} · M{pair.peakModule}
                                         </div>
                                     </div>
 

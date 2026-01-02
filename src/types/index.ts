@@ -61,6 +61,7 @@ export interface Bloque {
 export interface MetadatosSeccion {
     profesor?: string;
     sala?: string;
+    campus?: string;
 }
 
 /** Una actividad agrupa bloques del mismo tipo dentro de una sección */

@@ -72,7 +72,7 @@ export const SelectedCoursesList: React.FC<SelectedCoursesListProps> = ({
                                 {seccion.ramoNombre}
                             </span>
                             <span className="text-xs text-gray-400 hidden sm:inline-block shrink-0">
-                                (NRC: {seccion.nrc})
+                                (NRC: {seccion.nrc}){seccion.metadatos?.campus && <span className="ml-1 text-gray-500">[{seccion.metadatos.campus}]</span>}
                             </span>
                         </div>
                     </div>

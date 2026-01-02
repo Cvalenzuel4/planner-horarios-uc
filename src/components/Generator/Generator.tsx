@@ -433,7 +433,7 @@ export const Generator: React.FC<GeneratorProps> = ({
                                                                 className="checkbox-styled w-3.5 h-3.5 flex-shrink-0"
                                                             />
                                                             <span className={`truncate ${!isSeccionSeleccionada(ramo.sigla, sec.id) ? 'text-gray-400' : 'text-gray-700'}`}>
-                                                                Sec {sec.numero} {sec.metadatos?.profesor && <span className="text-gray-500 ml-1">({sec.metadatos.profesor})</span>}
+                                                                Sec {sec.numero} {sec.metadatos?.profesor && <span className="text-gray-500 ml-1">({sec.metadatos.profesor})</span>}{sec.metadatos?.campus && <span className="text-gray-400 ml-1 text-[10px]">[{sec.metadatos.campus}]</span>}
                                                             </span>
                                                         </label>
                                                     ))}

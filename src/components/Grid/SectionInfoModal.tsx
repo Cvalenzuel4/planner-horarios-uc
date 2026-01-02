@@ -15,6 +15,21 @@ import {
 import { VacanteAPI } from '../../services/api.types';
 import { obtenerVacantes } from '../../services/buscacursos.service';
 
+/** Mapeo de abreviaturas a nombres completos de campus */
+const CAMPUS_FULL_NAMES: Record<string, string> = {
+    'SJ': 'San Joaquín',
+    'CC': 'Casa Central',
+    'LC': 'Lo Contador',
+    'CO': 'Oriente',
+    'CV': 'Villarica',
+    'CE': 'Campus Externo',
+};
+
+/** Obtiene el nombre completo del campus desde su abreviatura */
+function getCampusFullName(abbreviation: string): string {
+    return CAMPUS_FULL_NAMES[abbreviation] || abbreviation;
+}
+
 interface SectionInfoModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -125,6 +140,12 @@ export const SectionInfoModal: React.FC<SectionInfoModalProps> = ({
                                 <span className="text-gray-800 font-medium">{sala}</span>
                             </div>
                         )}
+                        {seccion.metadatos?.campus && (
+                            <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                <span className="text-gray-500 text-xs block mb-1">🏛️ Campus</span>
+                                <span className="text-gray-800 font-medium">{getCampusFullName(seccion.metadatos.campus)}</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Vacantes */}
@@ -198,7 +219,26 @@ export const SectionInfoModal: React.FC<SectionInfoModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+                <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
+                    {/* Quick access links */}
+                    <div className="flex gap-2">
+                        <a
+                            href={`https://catalogo.uc.cl/index.php?tmpl=component&option=com_catalogo&view=requisitos&sigla=${seccion.ramoSigla}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-300 transition-colors flex items-center gap-1.5"
+                        >
+                            📋 Requisitos
+                        </a>
+                        <a
+                            href={`https://catalogo.uc.cl/index.php?tmpl=component&option=com_catalogo&view=programa&sigla=${seccion.ramoSigla}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-300 transition-colors flex items-center gap-1.5"
+                        >
+                            📄 Programa
+                        </a>
+                    </div>
                     <button
                         onClick={onClose}
                         className="btn-primary px-6"

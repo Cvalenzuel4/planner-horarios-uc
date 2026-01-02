@@ -449,6 +449,21 @@ export async function obtenerVacantes(
 // CONVERSIÓN DE DATOS
 // ============================================================================
 
+/** Mapeo de nombres de campus a abreviaturas */
+const CAMPUS_ABBREVIATIONS: Record<string, string> = {
+    'San Joaquín': 'SJ',
+    'Casa Central': 'CC',
+    'Lo Contador': 'LC',
+    'Oriente': 'CO',
+    'Villarica': 'CV',
+    'Campus Externo': 'CE',
+};
+
+/** Obtiene la abreviatura del campus, o retorna la primera letra si no está en el mapeo */
+function getCampusAbbreviation(campus: string): string {
+    return CAMPUS_ABBREVIATIONS[campus] || campus.substring(0, 2).toUpperCase();
+}
+
 /**
  * Convierte un curso de la API a una Sección del formato interno
  */
@@ -493,6 +508,7 @@ export function convertirCursoAPIaSeccion(cursoAPI: CursoAPI): Seccion {
         metadatos: {
             profesor: cursoAPI.profesor,
             sala: cursoAPI.horarios[0]?.sala || undefined,
+            campus: cursoAPI.campus ? getCampusAbbreviation(cursoAPI.campus) : undefined,
         },
     };
 }
