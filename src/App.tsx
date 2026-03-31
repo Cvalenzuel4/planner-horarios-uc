@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Ramo, SeccionConMask } from './types';
 import { prepararRamo } from './core/bitmask';
 import {
@@ -537,7 +538,7 @@ function App() {
                         <span>📥</span>
                     </button>
                     <button onClick={handleExportarJSON} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Exportar todos los datos a JSON">
-                        <span>💾</span>
+                        <span>���</span>
                     </button>
                     <button onClick={handleExportarExcel} className="btn-secondary text-xs md:text-sm px-3 py-2" title="Exportar horario visual a Excel">
                         <span>📄</span>
@@ -723,6 +724,9 @@ function App() {
                     </div>
                 )
             }
+
+            {/* Vercel Web Analytics */}
+            <Analytics />
         </div >
     );
 }
